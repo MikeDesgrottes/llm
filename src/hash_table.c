@@ -100,14 +100,19 @@ void resize_hash_table(HashTable* hash_table) {
 }
 
 // Retrieves the frequency of a given key
-size_t get_frequency(HashTable* hash_table, const char* key) {
+size_t get_frequency(HashTable* hash_table, const char* key, int (cmpfunc)(const char*, const char*)) {
     size_t index = hash_function(key, hash_table->capacity);
-
-    while (hash_table->entries[index] != NULL) {
-        if (strcmp(hash_table->entries[index]->key, key) == 0) {
-            return hash_table->entries[index]->value;
+    size_t step = 0;
+    while (step < hash_table->capacity) {
+	    size_t probing_index = (index + step) % hash_table->capacity;
+	    HashEntry* entry = hash_table->entries[probing_index];
+	    if(entry ==NULL){
+	    	return 0;
+	    }
+        if (entry->key != NULL && cmpfunc((const char* )entry->key, key) == 0) {
+            return entry->value;
         }
-        index = (index + 1) % hash_table->capacity;
+        step++;
     }
 
     return 0; // Key not found

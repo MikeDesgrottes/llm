@@ -26,7 +26,7 @@ void free_hash_table(HashTable* hash_table);
 void increment_frequency(HashTable* hash_table, const char* key);
 
 // Retrieves the frequency of a given key
-size_t get_frequency(HashTable* hash_table, const char* key);
+size_t get_frequency(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,const char*));
 
 void resize_hash_table(HashTable* hash_table);
 #endif // HASH_TABLE_H
