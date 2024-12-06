@@ -12,26 +12,46 @@ Tokenizer* create_tokenizer(size_t max_vocab_size) {
     tokenizer->vocab_size = 0;
     tokenizer->max_vocab_size = max_vocab_size;
     tokenizer->pair_freqs = create_hash_table(300);
+    tokenizer->token_map = create_hash_table(max_vocab_size);
     return tokenizer;
 }
 
 // Add a token to the vocabulary
 void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
     // Check if the token is already in the vocabulary
-    for (size_t i = 0; i < tokenizer->vocab_size; i++) {
-        if (strcmp(tokenizer->vocabulary[i], token) == 0) {
-            return; // Token already exists
-        }
+    int index = token_exists_in_vocabulary(tokenizer->vocabulary, token);
+    if(index >= 0){
+    	tokenizer->vocabulary[index]->frequency++;//Token already exists increment its frequency by one.
+	return;
     }
 
+    Token* new_token = create_token(token);
+    
     // Expand the vocabulary if needed
     if (tokenizer->vocab_size >= tokenizer->max_vocab_size) {
         printf("Vocabulary size limit reached!\n");
         return;
     }
+	 
+    // IF we're adding the first token
+    //
+    if(tokenizer->vocab_size == 0){
+    	Tokenizer** tokens = (Token**)malloc(sizeof(Token**));
+	if(tokens == NULL){
+		fprintf(stderr,"Error in allocating memory for vocabulary\n");
+		return;
+	}
 
-    tokenizer->vocabulary = (char**)realloc(tokenizer->vocabulary, sizeof(char*) * (tokenizer->vocab_size + 1));
-    tokenizer->vocabulary[tokenizer->vocab_size] = strdup(token);
+	tokens[0] = new_token;
+	return;
+    }
+    Token** vocab  = (Token**)realloc(tokenizer->vocabulary, sizeof(Token*) * (tokenizer->vocab_size + 1));
+    if(vocab == NULL){
+    	fprintf(stderr, "Error while reallocating space for vocabulary\n");
+	return;
+    }
+    tokenizer->vocabulary = vocab;
+    tokenizer->vocabulary[tokenizer->vocab_size]->text = strdup(token);
     tokenizer->vocab_size++;
 }
 
@@ -48,7 +68,7 @@ char** tokenize(const Tokenizer* tokenizer, const char* text, const char* delimi
         tokens[count++] = strdup(token); // Add token to the array
         token = strtok(NULL, delimiters);
     }
-
+)
     free(copy);
     *num_tokens = count; // Return the number of tokens
     return tokens;
@@ -62,6 +82,7 @@ char* split_by_character(const char* input){
 
 	if(!text){
 		perror("Memory Allocation Failed!");
+		return NULL;
 	}
 
 	for(size_t i = 0;i < strlen(input);i++){
@@ -195,6 +216,7 @@ void initial_BPE(Tokenizer* tokenizer, const char** dataset, size_t lines){
 				increment_frequency(tokenizer->pair_freqs,pair_key);
 
 			}
+			HashEntry* entry = find_most_freq_pairs(tokenizer->pair_freqs);
 		}
 	}
 	
@@ -207,5 +229,86 @@ size_t count_tokens_in_line(char** tokens) {
     }
     return count;
 }
-//initialize the vocabulary
 
+
+// Code to implement for tokens
+//
+
+Token* create_token(const char* text){
+	if(text == NULL){
+		fprintf(stderr,"Error invalid text to create token\n");
+		return NULL;
+	}
+	Token* token = (Token*)malloc(sizeof(Token));
+	if(!token){
+		fprintf(stderr, "Error allocating memory for token\n");
+		return NULL;
+	}
+
+	token->length = strlen(text);
+	token->text = strdup(text);
+	if(!token->text){
+		fprintf(stderr,"Failed to allocate memory for token text\n");
+		free(token);
+		return NULL;
+	}
+	token->frequency  = 0;
+	return token;
+}
+
+
+void free_token(Token* token){
+	if(token){
+		free(token->text);
+		free(token);	
+	}
+}
+
+
+void increment_frequency(Token* token){
+	if(token){
+		token->frequency++;
+	}
+}
+
+void reset_token_frequency(Token* token){
+	token->frequency = 0;
+}
+
+Token* merge_tokens(Token* token1, Token* token2){
+	if(token1 == NULL || token2 == NULL){
+		fprintf(stderr,"Error invalid token arguments\n"):
+		return NULL;
+	}
+	char* new_string = (char*)malloc(token1->length + token2->length + 1);
+	if(!new_string){
+		fprintf(stderr,"Error allocating memory for concating two strings\n");
+		return NULL;
+	}
+
+	sprintf(new_string, "%s%s", token1->text, token2->text);
+	Token* new_token = create_token((const char*) new_string);
+	free(new_string);
+	return new_token;
+}
+
+int token_exists_in_vocabulary(Tokenizer* tokenizer, const char* text){
+	return get_value(tokenizer->token_map,text,strcmp);
+}
+
+Token* find_most_frequent_token_pair(Token** tokens, size_t num_tokens){
+	size_t max_freq = 0;
+	size_t index = 0;
+	for(size_t i = 0; i < num_tokens;i++){
+		Token* token = tokens[i];
+		if(token == NULL){
+			// skipping empty slots
+		}else{
+			if(token->frequency > max_freq){
+				max_freq = token->frequency;
+				index = i;
+			}
+		}
+	}
+	return tokens[index];
+}

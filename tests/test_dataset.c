@@ -18,10 +18,15 @@ void test_add_line() {
 }
 
 // Other dataset tests here...
-
+void test_remove_non_existent() {
+    Dataset* dataset = initialize_dataset(2);
+    remove_line(dataset, 5);  // Index out of bounds
+    // Expect no crash
+    free_dataset(dataset);
+}
 void run_dataset_tests() {
     test_create_dataset();
     test_add_line();
+    test_remove_non_existent();
     // Call other dataset test functions...
 }
-
