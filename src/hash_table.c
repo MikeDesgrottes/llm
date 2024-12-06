@@ -118,3 +118,46 @@ int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,
     return -1; // Key not found
 }
 
+int insert_into_hash_table(HashTable* table, const char* key, size_t value){
+	// Compute the initial hash index
+    size_t index = hash_function(key, hash_table->capacity);
+    size_t step = 0;
+
+    // Use linear probing to find an empty slot or existing key
+    while (step < hash_table->capacity) {
+        size_t probing_index = (index + step) % hash_table->capacity;
+        HashEntry* entry = hash_table->entries[probing_index];
+
+        if (entry == NULL) {
+            // Insert a new entry if the slot is empty
+            entry = (HashEntry*)malloc(sizeof(HashEntry));
+            if (entry == NULL) {
+                fprintf(stderr, "Error allocating memory for hash table entry\n");
+                return -1;  // Error allocating memory
+            }
+            entry->key = strdup(key);
+            if (entry->key == NULL) {
+                fprintf(stderr, "Error allocating memory for hash table key\n");
+                free(entry);
+                return -1;  // Error allocating memory
+            }
+            entry->value = value;
+
+            // Assign the new entry to the probing index
+            hash_table->entries[probing_index] = entry;
+            hash_table->size++;
+            return 0;  // Success
+        } else if (strcmp(entry->key, key) == 0) {
+            // If the key already exists, update its value
+            entry->value = value;
+            return 0;  // Success
+        }
+
+        // Move to the next slot (linear probing)
+        step++;
+    }
+
+    // If we reach here, the hash table is full
+    fprintf(stderr, "Error: Hash table is full, unable to insert key: %s\n", key);
+    return -1;  // Hash table is full
+}

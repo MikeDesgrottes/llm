@@ -26,41 +26,66 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
     }
 
     Token* new_token = create_token(token);
-    
-    // Expand the vocabulary if needed
-    if (tokenizer->vocab_size >= tokenizer->max_vocab_size) {
-        printf("Vocabulary size limit reached!\n");
-        return;
+    if (new_token == NULL) {
+        fprintf(stderr, "Error allocating memory for new token\n");
+        return;  // Handle memory allocation failure for token
     }
-	 
-    // IF we're adding the first token
-    //
-    if(tokenizer->vocab_size == 0){
-    	Tokenizer** tokens = (Token**)malloc(sizeof(Token**));
-	if(tokens == NULL){
-		fprintf(stderr,"Error in allocating memory for vocabulary\n");
+
+    // Expand the vocabulary if needed
+
+    if (tokenizer->vocab_size == 0) {
+        // Initial allocation for the vocabulary
+        tokenizer->vocabulary = (Token**)malloc(sizeof(Token*) * 1);
+        if (tokenizer->vocabulary == NULL) {
+            fprintf(stderr, "Error in allocating memory for vocabulary\n");
+            free(new_token);
+            return;
+        }
+        tokenizer->max_vocab_size = 1;  // Set initial max size to 1
+    } else if (tokenizer->vocab_size >= tokenizer->max_vocab_size) {
+        // Double the size of the vocabulary if it's full
+        size_t new_max_size = tokenizer->max_vocab_size * 2;
+        Token** new_vocabulary = (Token**)realloc(tokenizer->vocabulary, sizeof(Token*) * new_max_size);
+        if (new_vocabulary == NULL) {
+            fprintf(stderr, "Error while reallocating memory for vocabulary\n");
+            free(new_token);
+            return;
+        }
+        tokenizer->vocabulary = new_vocabulary;
+        tokenizer->max_vocab_size = new_max_size;
+    }
+
+    size_t hash_index = hash_function(token, tokenizer->max_vocab_size);
+    size_t final_index = hash_index;
+    size_t step = 0;
+
+    while(step < tokenizer->max_vocab_size){
+    	if(tokenizer->vocabulary[final_index] == NULL){
+		tokenizer->vocabulary[final_index] = new_token;
+		tokenizer->vocab_size++;
+        	int result = insert_into_hash_table(tokenizer->token_map, token, final_index);
+		if (result != 0) {
+    		// Rollback changes in vocabulary if token_map insertion fails
+    		fprintf(stderr, "Error inserting token into token_map\n");
+    		tokenizer->vocabulary[final_index] = NULL;
+		free_token(new_token);
+		}
 		return;
 	}
 
-	tokens[0] = new_token;
-	return;
+	final_index = (hash_index + step) % tokenizer->max_vocab_size;
+	step++;
     }
-    Token** vocab  = (Token**)realloc(tokenizer->vocabulary, sizeof(Token*) * (tokenizer->vocab_size + 1));
-    if(vocab == NULL){
-    	fprintf(stderr, "Error while reallocating space for vocabulary\n");
-	return;
-    }
-    tokenizer->vocabulary = vocab;
-    tokenizer->vocabulary[tokenizer->vocab_size]->text = strdup(token);
-    tokenizer->vocab_size++;
+    fprintf(stderr,"Error: Unable to find an empty slot in vocabulary after probing\n");
+    free_token(new_token);
 }
 
 // Tokenize input text
-char** tokenize(const Tokenizer* tokenizer, const char* text, const char* delimiters, size_t* num_tokens) {
+Token** tokenize(const Dataset* dataset, const char* text, const char* delimiters, size_t* num_tokens) {
     char* copy = strdup(text); // Create a modifiable copy of the text
     char* token = strtok(copy, delimiters); // Tokenize the text
 
-    char** tokens = NULL;
+    char** token_text = NULL;
     size_t count = 0;
 
     while (token != NULL) {
@@ -68,7 +93,7 @@ char** tokenize(const Tokenizer* tokenizer, const char* text, const char* delimi
         tokens[count++] = strdup(token); // Add token to the array
         token = strtok(NULL, delimiters);
     }
-)
+
     free(copy);
     *num_tokens = count; // Return the number of tokens
     return tokens;

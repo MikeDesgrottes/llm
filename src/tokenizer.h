@@ -3,6 +3,7 @@
 
 #include <stddef.h> // For size_t
 #include "hash_table.h"
+#include "dataset.h"
 
 // Define the Tokenizer struct
 typedef struct {
@@ -22,7 +23,7 @@ typedef struct {
 // Function declarations
 Tokenizer* create_tokenizer(size_t max_vocab_size);
 void add_to_vocabulary(Tokenizer* tokenizer, const char* token);
-char** tokenize(const Tokenizer* tokenizer, const char* text, const char* delimiters, size_t* num_tokens);
+Token** tokenize(const Dataset* dataset, const char* text, const char* delimiters, size_t* num_tokens);
 void free_tokenizer(Tokenizer* tokenizer);
 char* split_by_character(const char* input);
 void free_tokens(char** tokens, size_t num_tokens);

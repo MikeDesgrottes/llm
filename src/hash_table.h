@@ -29,5 +29,7 @@ void increment_frequency(HashTable* hash_table, const char* key);
 int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,const char*));
 
 void resize_hash_table(HashTable* hash_table);
+
+int insert_into_hash_table(HashTable* table, const char* key, size_t value);
 #endif // HASH_TABLE_H
 
