@@ -338,34 +338,58 @@ void initialize_vocabulary(Tokenzier* tokenizer, Dataset* dataset){
 }
 
 
-void count_pairs(Tokenizer* tokenizer){
-	 if (tokenizer == NULL || tokenizer->token_map == NULL || tokenizer->pair_freqs == NULL) {
+void count_pairs(Tokenizer* tokenizer, Token** tokens, size_t num_tokens){
+	 if (tokenizer == NULL || tokens == NULL || tokenizer->pair_freqs == NULL) {
         	fprintf(stderr, "Error: Tokenizer or hash tables not initialized\n");
         	return;
     	}
 	 reset_hash_table(tokenizer->pair_freqs); // Clear existing frequencies
 
-    // Iterate through the vocabulary
-    for (size_t i = 0; i < tokenizer->vocab_size; i++) {
-        Token* token = tokenizer->vocabulary[i];
-        if (token == NULL || token->length < 2) {
-            continue; // Skip empty or single-character tokens
-        }
+	for(size_t i = 0; i < num_tokens - 1;i++){
+		Token* current = tokens[i];
+		Token* next = tokens[i + 1];
+		if(current == NULL || next == NULL || strcmp(current->text,"_") == 0  || strcmp(next->text,"_") == 0){
+			continue;
+		}
 
-        // Count adjacent character pairs
-        for (size_t j = 0; j < token->length - 1; j++) {
-            char pair[3] = {token->text[j], token->text[j + 1], '\0'};
 
-            int frequency = get_value(tokenizer->pair_freqs, pair, strcmp);
-            if (frequency >= 0) {
-                insert_into_hash_table(tokenizer->pair_freqs, pair, frequency + 1);
-            } else {
-                insert_into_hash_table(tokenizer->pair_freqs, pair, 1);
-            }
-        }
-    }
+		char* pair_key = create_pair_key(current->text,next->text);
+		if (pair_key == NULL) {
+            		fprintf(stderr, "Error: Failed to create pair key\n");
+            		continue;
+        	}
+
+        	// Update the pair frequency
+        	int frequency = get_value(tokenizer->pair_freqs, pair_key, strcmp);
+        	if (frequency >= 0) {
+            		insert_into_hash_table(tokenizer->pair_freqs, pair_key, frequency + 1);
+        	}else{
+            		insert_into_hash_table(tokenizer->pair_freqs, pair_key, 1);
+        	}
+
+        	free(pair_key);
+	}
 }
 
+char* create_pair_key(const char* token1, const char* token2) {
+    if (token1 == NULL || token2 == NULL) {
+        fprintf(stderr, "Error: NULL token provided for pair key creation\n");
+        return NULL;
+    }
+
+    size_t len1 = strlen(token1); // Length of token1 (excluding \0)
+    size_t len2 = strlen(token2); // Length of token2 (excluding \0)
+    char* pair_key = (char*)malloc(len1 + len2 + 2); // 1 for separator, 1 for \0
+
+    if (pair_key == NULL) {
+        fprintf(stderr, "Error: Failed to allocate memory for pair key\n");
+        return NULL;
+    }
+
+    // Combine token1 and token2 into pair_key, separated by a space
+    sprintf(pair_key, "%s %s", token1, token2);
+    return pair_key;
+}
 HahEntry* find_most_freq_pairs(HashTable* hash_table){
 	HashEntry* entry = NULL;
 	if(hash_table == NULL){
@@ -470,4 +494,94 @@ Token* find_most_frequent_token_pair(Token** tokens, size_t num_tokens){
 		}
 	}
 	return tokens[index];
+}
+
+void merge_most_freq_pair(token** tokenized_data, HashEntry* most_freq_pair, size_t size){
+	char* text = most_freq_pair->key;
+	Dataset* dataset = initialize_dataset(1);
+	int res = add_line(dataset,(const char*)text);
+	
+	if(res == -1){
+		fprintf(stderr,"Error: failed to add line \"%s\" to dataset.\n",text);
+		return;
+	}
+	// tokenize the pairs by space since that's the seperator given by count pairs ex: "a b" becomes "a" and "b". num_tokens should always return 3 here.
+	size_t num_tokens = 0;
+	Token** tokens = tokenize(dataset," ",&num_tokens);
+
+	if(num_tokens != 3){
+		fprintf(stderr, "Error: Failed to sperate token pairs %s\n",text);
+		free_dataset(dataset);
+		for(size_t i = 0; i < num_tokens;i++){
+			free_token(tokens[i]);
+		}
+		free(tokens);
+		return;
+	}
+	Token* merged_token = merge_tokens(tokens[0],token[1]);
+	if(merged_token == NULL){
+		fprintf(stderr,"Error: Failed to merge tokens %s and %s\n",tokens[0]->text, tokens[1]->text);
+		free_dataset(dataset);
+                for(size_t i = 0; i < num_tokens;i++){
+                        free_token(tokens[i]);
+                }
+                free(tokens);
+		return;
+	}
+
+	for(size_t i = 0; i < *size - 1;i++){
+		Token* current = tokenized_data[i];
+		Token* next = tokenized_data[i + 1];
+		if(strcmp(current->text, tokens[0]->text) == 0 && strcmp(next->text, tokens[1]->text) == 0){
+			free_token(current);
+			tokenized_data[i] = merged_token;
+
+			free_token(next);
+			tokenized_data[i + 1] = NULL;
+			for(size_t j = i + 1; j < size - 1; j++){
+				tokenized_data[j] = tokenized_data[j + 1];
+			}
+			(*size)--;
+			i--;
+		}
+	}
+
+	// Cleanup
+	free_dataset(dataset);
+	for (size_t i = 0; i < num_tokens; i++) {
+    		free_token(tokens[i]);
+	}
+	free(tokens);
+
+}
+// Code to implement BPE
+//
+
+void BPE(Tokenizer* tokenizer, Dataset* dataset){
+	// Null check to avoid uneccessary seg fault.
+	if(tokenizer == NULL | dataset ==NULL || dataset->num_lines == 0){
+		fprintf(stderr,"Tokenizer or dataset is empty or NULL\n");
+		return;
+	}
+	// Step 1: tokenized the dataset by characters
+	size_t num_tokens = 0;
+	Token** tokenized_data = tokenize(dataset,"",&num_tokens);
+	if(tokenized_data == NULL || num_tokens == 0){
+		fprintf(stderr,"Error: Could not tokenize dataset or zero token\n");
+		return;
+	}
+	// Initialize the vocabulary to include tokens consisting of individual characters
+	initialioze_vocabulary(tokenizer,dataset);
+
+	while(tokenizer->vocab_size < MAX_VOCAB_SIZE){
+		count_pairs(tokenizer,tokenized_data,num_tokens);
+		HashEntry* most_freq_pair = find_most_freq_pairs(tokenizer->pair_freqs);
+		if(most_freq_pair == NULL){
+			break; // no more frequent pairs left.
+		}
+
+		merge_most_freq_pair(tokenized_data, most_freq_pair);
+		Token* most_freq = create_token((const char*) most_freq_pair->key);
+		add_to_vocabulary(tokenizer,(const char*) most_freq_pair->key);
+	}
 }
