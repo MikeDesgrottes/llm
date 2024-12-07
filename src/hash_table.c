@@ -161,3 +161,28 @@ int insert_into_hash_table(HashTable* table, const char* key, size_t value){
     fprintf(stderr, "Error: Hash table is full, unable to insert key: %s\n", key);
     return -1;  // Hash table is full
 }
+
+void reset_hash_table(HashTable* hash_table) {
+    if (hash_table == NULL) {
+        return; // Handle NULL gracefully
+    }
+
+    // Iterate through all buckets in the hash table
+    for (size_t i = 0; i < hash_table->capacity; i++) {
+        HashEntry* entry = hash_table->entries[i];
+        if (entry != NULL) {
+            // Free the key and entry if it exists
+            free(entry->key);
+            entry->key = NULL;
+
+            // Reset value (optional, depending on your use case)
+            entry->value = 0;
+
+            free(entry); // Free the entry itself
+            hash_table->entries[i] = NULL;
+        }
+    }
+
+    // Reset metadata
+    hash_table->size = 0;
+}

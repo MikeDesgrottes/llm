@@ -35,13 +35,13 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 
     if (tokenizer->vocab_size == 0) {
         // Initial allocation for the vocabulary
-        tokenizer->vocabulary = (Token**)malloc(sizeof(Token*) * 1);
+        tokenizer->vocabulary = (Token**)malloc(sizeof(Token*) * 100);
         if (tokenizer->vocabulary == NULL) {
             fprintf(stderr, "Error in allocating memory for vocabulary\n");
             free(new_token);
             return;
         }
-        tokenizer->max_vocab_size = 1;  // Set initial max size to 1
+        tokenizer->max_vocab_size = 100;  // Set initial max size to 1
     } else if (tokenizer->vocab_size >= tokenizer->max_vocab_size) {
         // Double the size of the vocabulary if it's full
         size_t new_max_size = tokenizer->max_vocab_size * 2;
@@ -73,7 +73,7 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 		return;
 	}
 
-	final_index = (hash_index + step) % tokenizer->max_vocab_size;
+	final_index = (final_index + step) % tokenizer->max_vocab_size;
 	step++;
     }
     fprintf(stderr,"Error: Unable to find an empty slot in vocabulary after probing\n");
@@ -81,7 +81,7 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 }
 
 // Tokenize input text
-Token** tokenize(const Dataset* dataset, const char* text, const char* delimiters, size_t* num_tokens) {
+Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tokens) {
 	if(delimiters == NULL || dataset == NULL){
 		return NULL;
 	}
@@ -162,12 +162,79 @@ Token** tokenize(const Dataset* dataset, const char* text, const char* delimiter
                			free(text[k]);
             		}
             		free(text);
-            		token = strtok(NULL, " ");
+            		
 			free(copy);
 		}
+		tokens[count] = NULL;
 		*num_tokens = count;
-	}else{
-		
+		return tokens;
+	}else if (delimiters != NULL && strlen(delimiters) > 0) {
+    	size_t count = 0;
+    	size_t capacity = 10; // Initial capacity
+    	Token** tokens = (Token**)malloc(sizeof(Token*) * capacity);
+
+    	if (tokens == NULL) {
+        	fprintf(stderr, "Error: Failed to allocate memory for tokens\n");
+        	return NULL;
+    	}
+
+    // Tokenize by normal delimiters
+    for (size_t i = 0; i < dataset->num_lines; i++) {
+        char* line = dataset->lines[i];
+        if (line == NULL || strlen(line) == 0) {
+            continue; // Skip empty lines
+        }
+
+        char* copy = strdup(line);
+        if (copy == NULL) {
+            fprintf(stderr, "Error: Failed to duplicate line\n");
+            for (size_t j = 0; j < count; j++) {
+                free_token(tokens[j]);
+            }
+            free(tokens);
+            return NULL;
+        }
+
+        // Split line into tokens using strtok
+        char* token = strtok(copy, delimiters);
+        while (token != NULL) {
+            	Token* tok = create_token(token);
+            	if (tok == NULL) {
+                	fprintf(stderr, "Error: Failed to create token\n");
+                	for (size_t j = 0; j < count; j++) {
+                    	free_token(tokens[j]);
+                	}
+                	free(copy);
+                	free(tokens);
+                	return NULL;
+            	}
+
+            	// Add token to tokens array
+            	if (count >= capacity) {
+                	capacity *= 2;
+                	tokens = (Token**)realloc(tokens, sizeof(Token*) * capacity);
+                	if (tokens == NULL) {
+                    	fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
+                    	for (size_t j = 0; j < count; j++) {
+                        	free_token(tokens[j]);
+                    	}
+                    	free(copy);
+                    	return NULL;
+                	}
+            	}
+
+            	tokens[count++] = tok;
+
+            	// Get the next token
+            	token = strtok(NULL, delimiters);
+        	}
+
+        	free(copy); // Free the duplicated line
+    	}
+
+   	tokens[count] = NULL; // Null-terminate tokens array
+    	*num_tokens = count;  // Update the count of tokens
+    	return tokens;
 	}
 }
 
@@ -247,40 +314,63 @@ void free_tokenizer(Tokenizer* tokenizer) {
     free(tokenizer);
 }
 
-void initialize_vocabulary(Tokenzier* tokenizer, const char** dataset){
+void initialize_vocabulary(Tokenzier* tokenizer, Dataset* dataset){
+	if(tokenizer == NULL || dataset == NULL){
+		return; // nothing to do here
+			// in the future create a new tokenizer if dataset exists but tokenizer is null and have the pointer points to the new address
+	}
+	size_t num_tokens = 0;
+	Token** tokens = tokenize(dataset,"",&num_tokens);
+	if(tokens == NULL){
+		fprintf(stderr, "Error: the dataset could not be tokenize at character level\n");
+		return;
+	}
+	if(num_tokens == 0){
+		return; // No tokens where found
+	}
 	
-}
-
-void initialize_freqs(Tokenizer* tokenizer, size_t rows, size_t columns){
-	tokenizer->pair_freqs = malloc(sizeof(size_t*)*rows);
-	for(size_t i = 0; i < rows;i++){
-		tokenizer->pair_freqs[i] = malloc(sizeof(size_t)*columns);
-		for (size_t j = 0; j < columns; j++) {
-            		tokenizer->pair_freqs[i][j] = 0; // Initialize to 0
-        	}
-	}
+	// Add the tokens to the library.
+	for (size_t i = 0; i < num_tokens; i++) {
+        	add_to_vocabulary(tokenizer,(const char*) tokens[i]->text);
+        	free_token(tokens[i]); // Free the token after adding it to the vocabulary
+    	} 
+	free(tokens);
 }
 
 
-void count_pairs(Tokenizer* tokenizer, size_t rows, size_t columns, const char** text){
-	for(size_t i = 0;i < rows;i++){
-		char* tmp = text[i];
-		size_t len = strlen(tmp);
-		for(size_t j = 0; j < len - 1; j++){
-			size_t row = tmp[j] - 'a';
-			size_t column = tmp[j + 1] - 'a';
-			if(row < 26 && column <26){
-				tokenizer->pair_freqs[row][column]++;
-			}
-		}
-	}
+void count_pairs(Tokenizer* tokenizer){
+	 if (tokenizer == NULL || tokenizer->token_map == NULL || tokenizer->pair_freqs == NULL) {
+        	fprintf(stderr, "Error: Tokenizer or hash tables not initialized\n");
+        	return;
+    	}
+	 reset_hash_table(tokenizer->pair_freqs); // Clear existing frequencies
+
+    // Iterate through the vocabulary
+    for (size_t i = 0; i < tokenizer->vocab_size; i++) {
+        Token* token = tokenizer->vocabulary[i];
+        if (token == NULL || token->length < 2) {
+            continue; // Skip empty or single-character tokens
+        }
+
+        // Count adjacent character pairs
+        for (size_t j = 0; j < token->length - 1; j++) {
+            char pair[3] = {token->text[j], token->text[j + 1], '\0'};
+
+            int frequency = get_value(tokenizer->pair_freqs, pair, strcmp);
+            if (frequency >= 0) {
+                insert_into_hash_table(tokenizer->pair_freqs, pair, frequency + 1);
+            } else {
+                insert_into_hash_table(tokenizer->pair_freqs, pair, 1);
+            }
+        }
+    }
 }
 
 HahEntry* find_most_freq_pairs(HashTable* hash_table){
 	HashEntry* entry = NULL;
 	if(hash_table == NULL){
 		fprintf(stderr, "Error: invalid hash table!\n");
-		exit(EXIT_FAILURE);
+		return NULL;
 	}
 
 	if(hash_table->size == 0){
@@ -298,51 +388,6 @@ HahEntry* find_most_freq_pairs(HashTable* hash_table){
 }
 
 
-char*  merge_pairs(Tokenizer* tokenizer,size_t *best_row, size_t* best_column){
-	if(tokenizer->vocabulary == NULL){
-		tokenizer->vocabulary = (char**)malloc(sizeof(char*));
-	}	
-
-}
-
-char* create_pair_keys(const char* token1, const char* token2){
-	size_t len1 = strlen(token1);
-	size_t len2 = strlen(token2);
-	char* key = malloc(len1 + len2 + 2);
-	if(key == NULL){
-		printf("Key creation failed!");
-	}
-
-	sprintf(key,"%s_%s",token1,token2);
-}
-void initial_BPE(Tokenizer* tokenizer, const char** dataset, size_t lines){
-	if(tokenizer->vocabulary == NULL){
-                tokenizer->vocabulary = (char**)malloc(sizeof(char*));
-        }
-	size_t num_of_tokens;
-	char*** dataset_characters = tokenize_dataset_to_characters(dataset, lines,' ');
-	for(size_t i = 0; i < lines;i++){
-		size_t t = count_tokens_in_line(dataset_to_characters[i]);
-		for(size_t j = 0;j < t;j++){
-			char* token = dataset_characters[i][j];
-			for(size_t k = 0; k <strlen(token) - 1;k++){
-				char* pair_key =  create_pair_keys(dataset_characters[i][j][k],dataset_characters[i][j][k+1]);
-				increment_frequency(tokenizer->pair_freqs,pair_key);
-
-			}
-			HashEntry* entry = find_most_freq_pairs(tokenizer->pair_freqs);
-		}
-	}
-	
-}
-
-size_t count_tokens_in_line(char** tokens) {
-    size_t count = 0;
-    while (tokens[count] != NULL) { // Assume NULL terminator
-        count++;
-    }
-    return count;
-}
 
 
 // Code to implement for tokens

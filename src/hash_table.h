@@ -31,5 +31,7 @@ int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,
 void resize_hash_table(HashTable* hash_table);
 
 int insert_into_hash_table(HashTable* table, const char* key, size_t value);
+
+void reset_hash_table(HashTable* hash_table);
 #endif // HASH_TABLE_H
 
