@@ -82,38 +82,127 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 
 // Tokenize input text
 Token** tokenize(const Dataset* dataset, const char* text, const char* delimiters, size_t* num_tokens) {
-    char* copy = strdup(text); // Create a modifiable copy of the text
-    char* token = strtok(copy, delimiters); // Tokenize the text
+	if(delimiters == NULL || dataset == NULL){
+		return NULL;
+	}
 
-    char** token_text = NULL;
-    size_t count = 0;
+	if(strlen(delimiters) == 0){
+		size_t count = 0;
+		Token** tokens = (Token**)malloc(sizeof(Token*));
 
-    while (token != NULL) {
-        tokens = (char**)realloc(tokens, sizeof(char*) * (count + 1));
-        tokens[count++] = strdup(token); // Add token to the array
-        token = strtok(NULL, delimiters);
-    }
+		if(tokens == NULL){
+			fprintf(stderr,"Error: failed to allocate memory for tokens\n");
+			return NULL;
+		}
+		// tokenize at chracter-level
+		for(size_t i = 0; i < dataset->num_lines;i++){
+			char* line = dataset->lines[i];
+			if(line == NULL || strlen(line) == 0){
+				continue;
+			}
+			char* copy = strdup(line);
+			if (copy == NULL) {
+            			fprintf(stderr, "Error: Failed to duplicate line\n");
+            			// Free already allocated tokens
+            			for (size_t j = 0; j < count; j++) {
+                			free_token(tokens[j]);
+            			}
+            			free(tokens);
+            			return;
+        		}
+			char* token = strtok(copy," ");
+			while(token != NULL){
+				size_t step = 0;
+				char** text = split_by_character((const char*)token);
+				if (text == NULL) {
+                			fprintf(stderr, "Error: Failed to split token into characters\n");
+                			// Free memory and clean up
+                			free(copy);
+                			for (size_t j = 0; j < count; j++) {
+                    				free_token(tokens[j]);
+                			}
+                			free(tokens);
+                			return;
+            			}
+				while(text[step] != NULL){
+					Token* tok = create_token(text[step]);
+					tokens[count] = tok;
+					count++;
+					step++;
+					tokens = (Token**)realloc(tokens,sizeof(Token*) * (count + 1));
+					if(tokens == NULL){
+						// implement error reporting here
+						fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
+                    				for (size_t j = 0; j < count; j++) {
+                        				free_token(tokens[j]);
+                    				}
+                    				for (size_t k = 0; k <= step; k++) {
+                        				free(text[k]);
+                    				}
+                    				free(text);
+                    				free(copy);
+                    				return;
+					}
+				}
+				Token* sperator = create_token("_");
+				if(sperator == NULL){
+					fprintf(stderr,"Error: Failed to create sperator token\n");
+					for (size_t j = 0; j < count; j++) {
+            					free_token(tokens[j]);
+        				}
+        				free(copy);
+        				free(tokens);
+					return;
+				}
+				tokens[count++] = seperator;
+				token = strtok(NULL," ");
+			}
 
-    free(copy);
-    *num_tokens = count; // Return the number of tokens
-    return tokens;
+			for (size_t k = 0; k < step; k++) {
+               			free(text[k]);
+            		}
+            		free(text);
+            		token = strtok(NULL, " ");
+			free(copy);
+		}
+		*num_tokens = count;
+	}else{
+		
+	}
 }
 
 // Split a string character wise.
 
-char* split_by_character(const char* input){
+char** split_by_character(const char* input){
+	if(input == "" || input == NULL){
+		return NULL;
+	}
 	size_t length = strlen(input);
-	char* text = (char*)malloc(sizeof(char)*(length+ 1));
+	char** text = (char**)malloc(sizeof(char*)*(length + 1));
 
 	if(!text){
-		perror("Memory Allocation Failed!");
+		fprintf(stderr,"Error: Failed to allocate memory for strings\n");
 		return NULL;
 	}
 
-	for(size_t i = 0;i < strlen(input);i++){
-		text[i] = input[i];
+	for(size_t i = 0;i < length;i++){
+		char* character = (char*)malloc(2);
+		if (!character) {
+            fprintf(stderr, "Error: Failed to allocate memory for character token\n");
+
+            // Free already allocated memory before returning NULL
+            	for (size_t	j = 0; j < i; j++) {
+                	free(text[j]);
+            	}
+            	free(text);
+            	return NULL;
+        	}
+		character[0] = input[i];
+		character[1] = '\0';
+		text[i] = character;
 	}
-	text[length] = '\0';
+
+	text[length] = NULL;
 	return text;
 }
 
