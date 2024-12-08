@@ -12,8 +12,8 @@ void test_create_hash_table() {
 
 void test_increment_frequency() {
     HashTable* hash_table = create_hash_table(10);
-    increment_frequency(hash_table, "key1");
-    assert(get_frequency(hash_table, "key1", strcmp) == 1);
+    increment_frequency_hash_table(hash_table, "key1");
+    assert(get_value(hash_table, "key1", strcmp) == 1);
     free_hash_table(hash_table);
 }
 

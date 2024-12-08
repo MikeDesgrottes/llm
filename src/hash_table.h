@@ -23,7 +23,7 @@ HashTable* create_hash_table(size_t capacity);
 void free_hash_table(HashTable* hash_table);
 
 // Increments the frequency of a given key
-void increment_frequency(HashTable* hash_table, const char* key);
+void increment_frequency_hash_table(HashTable* hash_table, const char* key);
 
 // Retrieves the frequency of a given key
 int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,const char*));
@@ -33,5 +33,6 @@ void resize_hash_table(HashTable* hash_table);
 int insert_into_hash_table(HashTable* table, const char* key, size_t value);
 
 void reset_hash_table(HashTable* hash_table);
+size_t hash_function(const char* key, size_t capacity);
 #endif // HASH_TABLE_H
 

@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 // A simple hash function for strings
-static size_t hash_function(const char* key, size_t capacity) {
+size_t hash_function(const char* key, size_t capacity) {
     size_t hash = 0;
     while (*key) {
         hash = (hash * 31 + *key) % capacity; // Multiply by a prime number
@@ -42,7 +42,7 @@ void free_hash_table(HashTable* hash_table) {
 }
 
 // Increments the frequency of a given key
-void increment_frequency(HashTable* hash_table, const char* key) {
+void increment_frequency_hash_table(HashTable* hash_table, const char* key) {
 	if ((float)hash_table->size / hash_table->capacity > 0.7) {
         resize_hash_table(hash_table);
     }
@@ -120,13 +120,13 @@ int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,
 
 int insert_into_hash_table(HashTable* table, const char* key, size_t value){
 	// Compute the initial hash index
-    size_t index = hash_function(key, hash_table->capacity);
+    size_t index = hash_function(key, table->capacity);
     size_t step = 0;
 
     // Use linear probing to find an empty slot or existing key
-    while (step < hash_table->capacity) {
-        size_t probing_index = (index + step) % hash_table->capacity;
-        HashEntry* entry = hash_table->entries[probing_index];
+    while (step < table->capacity) {
+        size_t probing_index = (index + step) % table->capacity;
+        HashEntry* entry = table->entries[probing_index];
 
         if (entry == NULL) {
             // Insert a new entry if the slot is empty
@@ -144,8 +144,8 @@ int insert_into_hash_table(HashTable* table, const char* key, size_t value){
             entry->value = value;
 
             // Assign the new entry to the probing index
-            hash_table->entries[probing_index] = entry;
-            hash_table->size++;
+            table->entries[probing_index] = entry;
+            table->size++;
             return 0;  // Success
         } else if (strcmp(entry->key, key) == 0) {
             // If the key already exists, update its value

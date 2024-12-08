@@ -1,3 +1,6 @@
+#ifndef DATASET_H
+#define DATASET_H
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,3 +22,5 @@ char* get_line(Dataset* dataset, size_t index);
 void clear_dataset(Dataset* dataset);
 size_t search_data(Dataset* dataset, char* target, int (*cmp_func)(char*, char*));
 size_t* search_data_all(Dataset* dataset, char* target, int (*cmp_func)(char*, char*), size_t* match_count);
+
+#endif
