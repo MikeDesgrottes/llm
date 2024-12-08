@@ -6,6 +6,12 @@
 #include "hash_table.h"
 #include "../include/config.h"
 
+
+//TODO: Centralize the logic for resizing a tokenizer's vocabulary.
+//	Functions to consider changing are resize_vocabulary, resize_hash_table, resize_dataset
+//
+//
+//
 // Create a tokenizer instance
 Tokenizer* create_tokenizer(size_t max_vocab_size) {
     Tokenizer* tokenizer = (Tokenizer*)malloc(sizeof(Tokenizer));
@@ -30,13 +36,28 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 		return;
 	}
     // Check if the token is already in the vocabulary
-    int index = token_exists_in_vocabulary(tokenizer, token);
-    if(index >= 0){
-    	tokenizer->vocabulary[index]->frequency++;//Token already exists increment its frequency by one.
-	return;
-    }
+        HashTable* table = tokenizer->token_map;
+	// sanity checks
+	if(table == NULL){
+		fprintf(stderr,"Error: Invalid token map\n");
+		return;
+	}
 
-    Token* new_token = create_token(token);
+	size_t size = table->size;
+	for(size_t i = 0; i < size; i++){
+		HashEntry* entry = table->entries[i];
+
+		// sanity checks
+		if(entry == NULL){
+			continue; //skip empty slots.	
+		}
+
+		if(strcmp((const char*)entry->key,token) == 0){
+			tokenizer->vocabulary[entry->value]->frequency++;
+			return;
+		}
+	}
+	Token* new_token = create_token(token);
     if (new_token == NULL) {
         fprintf(stderr, "Error allocating memory for new token\n");
         return;  // Handle memory allocation failure for token
@@ -52,6 +73,10 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
             free(new_token);
             return;
         }
+
+	for(size_t i = 0; i< 100;i++){
+		tokenizer->vocabulary[i] = NULL;
+	}
         tokenizer->max_vocab_size = 100;  // Set initial max size to 1
     } else if (tokenizer->vocab_size >= tokenizer->max_vocab_size) {
         // Double the size of the vocabulary if it's full
@@ -62,7 +87,12 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
             free(new_token);
             return;
         }
+
+
         tokenizer->vocabulary = new_vocabulary;
+	for(size_t i = tokenizer->max_vocab_size; i< new_max_size;i++){
+                tokenizer->vocabulary[i] = NULL;
+        }
         tokenizer->max_vocab_size = new_max_size;
     }
 
@@ -83,9 +113,6 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 			tokenizer->vocab_size--;
 		}
 		return;
-	}else{
-		//TODO: implement duplicate checking here.
-
 	}
 
 	final_index = (final_index + step) % tokenizer->max_vocab_size;
@@ -102,7 +129,7 @@ int insert_into_token_map(HashTable* table, const char* key, size_t value){
 		return -1;
 	}
 
-	HashEntry* entry =(HashEntry*) malloc(sizeof(HashEntry*));
+	HashEntry* entry =(HashEntry*) malloc(sizeof(HashEntry));
 	if(entry == NULL){
 		fprintf(stderr,"Error: Could not allocate enough memory for hash entry\n");
 		return -1;
@@ -119,7 +146,28 @@ int insert_into_token_map(HashTable* table, const char* key, size_t value){
 			}
 		}
 	}
+
+	// Ensure the table has enough capacity
+    if (table->size >= table->capacity) {
+        size_t new_capacity = table->capacity * 2;
+        HashEntry** new_entries = realloc(table->entries, new_capacity * sizeof(HashEntry*));
+        if (new_entries == NULL) {
+            fprintf(stderr, "Error: Could not resize hash table\n");
+            return -1;
+        }
+        // Initialize new slots to NULL
+        for (size_t i = table->capacity; i < new_capacity; i++) {
+            new_entries[i] = NULL;
+        }
+        table->entries = new_entries;
+        table->capacity = new_capacity;
+    }
 	entry->key = strdup(key);
+	if(entry->key == NULL){
+		fprintf(stderr,"Error duplicating key %s\n",key);
+		free(entry);
+		return -1;
+	}
 	entry->value = value;
 	table->entries[table->size] = entry;
 	table->size++;
@@ -333,10 +381,15 @@ void free_tokens(char** tokens, size_t num_tokens) {
 // Free the tokenizer and its resources
 void free_tokenizer(Tokenizer* tokenizer) {
     for (size_t i = 0; i < tokenizer->vocab_size; i++) {
-        free(tokenizer->vocabulary[i]);
+	    if(tokenizer->vocabulary[i] == NULL){
+		    continue;
+	    }
+
+        free_token(tokenizer->vocabulary[i]);
     }
 
 	free_hash_table(tokenizer->pair_freqs);
+	free_hash_table(tokenizer->token_map);
     free(tokenizer->vocabulary);
     free(tokenizer);
 }
@@ -449,7 +502,7 @@ Token* create_token(const char* text){
 		fprintf(stderr,"Error invalid text to create token\n");
 		return NULL;
 	}
-	Token* token = (Token*)malloc(sizeof(Token));
+	Token* token = (Token*)calloc(1,sizeof(Token));
 	if(!token){
 		fprintf(stderr, "Error allocating memory for token\n");
 		return NULL;
@@ -463,14 +516,18 @@ Token* create_token(const char* text){
 		return NULL;
 	}
 	token->frequency  = 0;
+	fprintf(stderr, "Token created: %p, text: %s\n", (void*)token, token->text);
 	return token;
 }
 
 
 void free_token(Token* token){
-	if(token){
-		free(token->text);
-		free(token);	
+	if(token != NULL){
+		if(token->text != NULL){
+			free(token->text);
+			free(token);
+			fprintf(stderr, "Token freed: %p\n", (void*)token);
+		}
 	}
 }
 

@@ -73,6 +73,9 @@ int load_dataset_from_file(Dataset *dataset, const char *filename) {
 }
 
 void remove_line(Dataset* dataset, size_t index){
+	if(dataset == NULL ||dataset->lines == NULL || index >= dataset->num_lines){
+		return;
+	}
 	if(dataset->lines[index] == NULL){
 		return;
 	}
@@ -80,7 +83,6 @@ void remove_line(Dataset* dataset, size_t index){
 	for(size_t i = index;i < dataset->num_lines - 1;i++){
 		char* next = dataset->lines[i + 1];
 		dataset->lines[i] = next;
-		index++;
 	}
 	dataset->lines[dataset->num_lines - 1] = NULL;
 	dataset->num_lines--;
