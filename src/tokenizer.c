@@ -85,6 +85,7 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 		return;
 	}else{
 		//TODO: implement duplicate checking here.
+
 	}
 
 	final_index = (final_index + step) % tokenizer->max_vocab_size;
