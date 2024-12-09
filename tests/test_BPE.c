@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include "../src/tokenizer.h"
 #include "../src/dataset.h"
-
+#include <assert.h>
 void print_vocabulary(Tokenizer* tokenizer, size_t* valid_count);
 
 // Helper function to print tokenized data
@@ -23,7 +23,7 @@ void test_BPE() {
     printf("\nEdge Case 1: Empty Dataset\n");
     print_vocabulary(empty_tokenizer,&count);
 
-    free_tokenizer(empty_tokenizer);
+    free_tokenizer(&empty_tokenizer);
     free_dataset(empty_dataset);
 
     // Edge Case 2: Single-line dataset
@@ -34,7 +34,7 @@ void test_BPE() {
     printf("\nEdge Case 2: Single-line Dataset\n");
     print_vocabulary(single_line_tokenizer,&count);
 
-    free_tokenizer(single_line_tokenizer);
+    free_tokenizer(&single_line_tokenizer);
     free_dataset(single_line_dataset);
 
     // General Case: Larger dataset with varied patterns and multi-character words
@@ -58,7 +58,7 @@ void test_BPE() {
     print_tokenized_data(tokenized_data, num_tokens);
 
     // Cleanup
-    free_tokenizer(general_tokenizer);
+    free_tokenizer(&general_tokenizer);
     free_dataset(general_dataset);
     for (size_t i = 0; i < num_tokens; i++) {
         free_token(tokenized_data[i]);
@@ -84,7 +84,7 @@ void print_vocabulary(Tokenizer* tokenizer, size_t* valid_count) {
     *valid_count = tmp_count;
 }
 void check_token_map(Tokenizer* tokenizer) {
-    printf("Checking token_map consistency...\n");
+    printf("\nChecking token_map consistency...\n");
     for (size_t i = 0; i < tokenizer->max_vocab_size; i++) {
         if (tokenizer->vocabulary[i] != NULL) {
             int index = get_value(tokenizer->token_map, tokenizer->vocabulary[i]->text, strcmp);
@@ -99,7 +99,7 @@ void check_token_map(Tokenizer* tokenizer) {
     printf("Token map consistency check complete.\n");
 }
 void test_add_to_vocabulary() {
-    printf("Running test_add_to_vocabulary...\n");
+    printf("\nRunning test_add_to_vocabulary...\n");
 
     // Step 1: Initialize a tokenizer
     size_t max_vocab_size = 5;
@@ -139,7 +139,109 @@ void test_add_to_vocabulary() {
 
     check_token_map(tokenizer);
         // Cleanup
-    free_tokenizer(tokenizer);
+    free_tokenizer(&tokenizer);
 
     printf("test_add_to_vocabulary completed.\n");
+}
+
+void test_free_tokenizer() {
+    Tokenizer* tokenizer = create_tokenizer(3);
+
+    // Add tokens to the tokenizer
+    add_to_vocabulary(tokenizer, "hello");
+    add_to_vocabulary(tokenizer, "world");
+    add_to_vocabulary(tokenizer, "token");
+
+    // Free the tokenizer
+    free_tokenizer(&tokenizer);
+    // Verify that everything was freed
+    //assert(tokenizer == NULL); // Optional: Change the function to use a double pointer
+}
+void test_memory_leak() {
+    //Tokenizer* tokenizer = create_tokenizer(10);
+    Token* token1 = create_token("hello");
+    Token* token2 = create_token("world");
+	free_token(token1);
+	free_token(token2);
+    //add_to_vocabulary(tokenizer, (const char*)token1->text);
+    //add_to_vocabulary(tokenizer, (const char*)token2->text);
+
+    //free_tokenizer(&tokenizer);
+}
+
+void test_create_tokenizer_memory_leak() {
+    fprintf(stderr, "\nTesting create_tokenizer memory management...\n");
+
+    // Create a tokenizer
+    Tokenizer* tokenizer = create_tokenizer(100);
+    if (!tokenizer) {
+        fprintf(stderr, "Failed to create tokenizer\n");
+        return;
+    }
+
+    // Verify tokenizer and fields are allocated
+    fprintf(stderr, "Tokenizer created: %p\n", (void*)tokenizer);
+    fprintf(stderr, "Vocabulary allocated: %p\n", (void*)tokenizer->vocabulary);
+    fprintf(stderr, "Pair frequencies hash table allocated: %p\n", (void*)tokenizer->pair_freqs);
+    fprintf(stderr, "Token map hash table allocated: %p\n", (void*)tokenizer->token_map);
+
+    // Free the tokenizer
+    free_tokenizer(&tokenizer);
+
+    // Verify tokenizer is nullified
+    if (tokenizer == NULL) {
+        fprintf(stderr, "Tokenizer successfully freed and nullified.\n");
+    } else {
+        fprintf(stderr, "Tokenizer not nullified properly.\n");
+    }
+
+    printf("Testing tokenizer_create memory leaks completed. \n\n");
+}
+
+void test_combined_memory_leak() {
+    fprintf(stderr, "\nTesting combined create_token and create_tokenizer memory management...\n");
+
+    // Step 1: Create the tokenizer
+    Tokenizer* tokenizer = create_tokenizer(10);
+    if (!tokenizer) {
+        fprintf(stderr, "Failed to create tokenizer\n");
+        return;
+    }
+    fprintf(stderr, "Tokenizer created: %p\n", (void*)tokenizer);
+
+    // Step 2: Create tokens and add them to the tokenizer
+    Token* token1 = create_token("hello");
+    Token* token2 = create_token("world");
+
+    if (!token1 || !token2) {
+        fprintf(stderr, "Failed to create tokens\n");
+        free_token(token1);
+        free_token(token2);
+        free_tokenizer(&tokenizer);
+        return;
+    }
+
+    fprintf(stderr, "Token1 created: %p, text: %p\n", (void*)token1, (void*)token1->text);
+    fprintf(stderr, "Token2 created: %p, text: %p\n", (void*)token2, (void*)token2->text);
+
+    // Add tokens to the tokenizer's vocabulary
+    add_to_vocabulary(tokenizer, (const char*)token1->text);
+    add_to_vocabulary(tokenizer, (const char*)token2->text);
+
+    free_token(token1);
+    free_token(token2);
+
+    fprintf(stderr, "Tokens added to tokenizer.\n");
+
+    // Step 3: Free the tokenizer, which should also free the tokens
+    free_tokenizer(&tokenizer);
+
+    // Verify tokenizer is nullified
+    if (!tokenizer) {
+        fprintf(stderr, "Tokenizer successfully freed and nullified.\n");
+    } else {
+        fprintf(stderr, "Tokenizer was not nullified properly.\n");
+    }
+
+    printf("Testing combined Memory completed.\n\n");
 }

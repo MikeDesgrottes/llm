@@ -20,14 +20,20 @@ char** load_dataset(const char* file_path, size_t* lines) {
         buffer[strcspn(buffer, "\n")] = 0; // Remove newline
 	if(count >= capacity){
 		capacity *=2;
-        	dataset = (char**)realloc(vocabulary, sizeof(char*) * (count + 1));
+        	char** tmp_dataset = (char**)realloc(dataset, sizeof(char*) * (count + 1));
+		if(tmp_dataset == NULL){
+			fprintf(stderr,"Error: Failed to allocate enough memory for a new dataset\n");
+			return NULL;
+		}
+
+		dataset = tmp_dataset;
 	}
         dataset[count++] = strdup(buffer);
     }
 
     fclose(file);
     *lines = count;
-    return vocabulary;
+    return dataset;
 }
 
 // Save vocabulary to a file

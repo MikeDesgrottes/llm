@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -g
+CFLAGS = -Wall -Werror -g  
 
 SRC = src/main.c src/tokenizer.c src/utils.c
 OBJ = $(SRC:.c=.o)
@@ -25,7 +25,7 @@ $(TEST_TARGET): $(TEST_OBJ)
 	$(CC) $(CFLAGS) -c $< -o $@
 
 clean:
-	rm -f $(OBJ) $(TARGET)
+	rm -f $(OBJ) $(TEST_OBJ) $(TARGET)
 
 run_tests: $(TEST_TARGET)
 	./$(TEST_TARGET)

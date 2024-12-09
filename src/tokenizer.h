@@ -24,7 +24,7 @@ typedef struct {
 Tokenizer* create_tokenizer(size_t max_vocab_size);
 void add_to_vocabulary(Tokenizer* tokenizer, const char* token);
 Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tokens);
-void free_tokenizer(Tokenizer* tokenizer);
+void free_tokenizer(Tokenizer** tokenizer);
 char** split_by_character(const char* input);
 void free_tokens(char** tokens, size_t num_tokens);
 char*** tokenize_dataset_to_characters(const char** dataset, size_t num_lines, const char* delimiter);
