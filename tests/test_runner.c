@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <assert.h>
+#include "test_BPE.h"
 
 // Declare the functions to run dataset and hash table tests
 void run_dataset_tests();
@@ -24,6 +25,9 @@ int main() {
     //test_combined_memory_leak();
     //test_free_tokenizer();
     //test_add_to_vocabulary();
+    //test_tokenize_functionality();
+    //test_tokenize_memory_leaks();
+    //test_initialize_vocabulary_memory_leak();
     test_BPE();
     printf("All tests completed.\n");
     return 0;

@@ -14,7 +14,7 @@ void print_tokenized_data(Token** tokenized_data, size_t size) {
 }
 
 void test_BPE() {
-    printf("Running BPE Tests...\n");
+    printf("\nRunning BPE Tests...\n");
 	size_t count = 0;
     // Edge Case 1: Empty dataset
     Dataset* empty_dataset = initialize_dataset(0);
@@ -31,6 +31,7 @@ void test_BPE() {
     add_line(single_line_dataset, "a b c d");
     Tokenizer* single_line_tokenizer = create_tokenizer(10);
     BPE(single_line_tokenizer, single_line_dataset);
+    
     printf("\nEdge Case 2: Single-line Dataset\n");
     print_vocabulary(single_line_tokenizer,&count);
 
@@ -244,4 +245,124 @@ void test_combined_memory_leak() {
     }
 
     printf("Testing combined Memory completed.\n\n");
+}
+
+void test_tokenize_functionality() {
+    printf("\nTesting tokenize functionality...\n");
+
+    // Step 1: Create a dataset
+    Dataset* dataset = initialize_dataset(3);
+    if (!dataset) {
+        fprintf(stderr, "Failed to create dataset.\n");
+        return;
+    }
+
+    // Add lines to the dataset
+    add_line(dataset, "hello world");
+    add_line(dataset, "foo bar");
+    add_line(dataset, "");
+
+    // Step 2: Tokenize the dataset
+    size_t num_tokens = 0;
+    Token** tokens = tokenize(dataset, " ", &num_tokens);
+    if (!tokens) {
+        fprintf(stderr, "Tokenize returned NULL.\n");
+        free_dataset(dataset);
+        return;
+    }
+
+    // Step 3: Verify tokens
+    const char* expected_tokens[] = {"hello", "_", "world", "_", "foo", "_", "bar", "_"};
+    size_t expected_count =8;
+
+    if (num_tokens != expected_count) {
+        printf("\nExpected %zu tokens, but got %zu tokens.\n", expected_count, num_tokens);
+    } else {
+        for (size_t i = 0; i < num_tokens; i++) {
+            if (strcmp(tokens[i]->text, expected_tokens[i]) != 0) {
+                printf("\nToken mismatch at index %zu: expected '%s', got '%s'.\n",
+                        i, expected_tokens[i], tokens[i]->text);
+            } else {
+                printf("\nToken %zu matches: %s.\n", i, tokens[i]->text);
+            }
+        }
+    }
+
+    // Step 4: Free tokens
+    for (size_t i = 0; i < num_tokens; i++) {
+        free_token(tokens[i]);
+    }
+    free(tokens);
+
+    // Step 5: Free the dataset
+    free_dataset(dataset);
+}
+
+void test_tokenize_memory_leaks() {
+    printf("\nTesting tokenize for memory leaks...\n");
+
+    // Step 1: Create a dataset with multiple lines
+    Dataset* dataset = initialize_dataset(22);
+    if (!dataset) {
+        fprintf(stderr, "Failed to create dataset.\n");
+        return;
+    }
+
+    add_line(dataset, "this is a test");
+    add_line(dataset, "another line");
+    add_line(dataset, "edge-case , delimiters");
+
+    // Step 2: Tokenize with delimiters
+    size_t num_tokens = 0;
+    Token** tokens = tokenize(dataset, " ,", &num_tokens);
+
+    if (tokens) {
+        // Free tokens
+        for (size_t i = 0; i < num_tokens; i++) {
+            free_token(tokens[i]);
+        }
+        free(tokens);
+    } else {
+        printf("\nTokenize returned NULL unexpectedly.\n");
+    }
+
+    // Step 3: Free the dataset
+    free_dataset(dataset);
+}
+
+void test_initialize_vocabulary_memory_leak() {
+    printf("\nTesting initialize_vocabulary for memory leaks...\n");
+
+    // Step 1: Create a dataset
+    Dataset* dataset = initialize_dataset(10);
+    if (!dataset) {
+        fprintf(stderr, "Failed to create dataset.\n");
+        return;
+    }
+
+    // Add sample data to the dataset
+    add_line(dataset, "hello");
+    add_line(dataset, "world");
+
+    // Step 2: Create a tokenizer
+    Tokenizer* tokenizer = create_tokenizer(10);
+    if (!tokenizer) {
+        fprintf(stderr, "Failed to create tokenizer.\n");
+        free_dataset(dataset);
+        return;
+    }
+
+    // Step 3: Initialize vocabulary
+    initialize_vocabulary(tokenizer, dataset);
+
+    // Step 4: Free resources
+    free_tokenizer(&tokenizer);
+    free_dataset(dataset);
+
+    // Verify tokenizer is nullified
+    if (!tokenizer) {
+        fprintf(stderr, "Tokenizer successfully freed and nullified.\n");
+    } else {
+        fprintf(stderr, "Tokenizer was not nullified properly.\n");
+    }
 }

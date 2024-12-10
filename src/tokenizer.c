@@ -174,7 +174,8 @@ Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tok
 
 	if(strlen(delimiters) == 0){
 		size_t count = 0;
-		Token** tokens = (Token**)malloc(sizeof(Token*));
+		Token** tokens = (Token**)calloc(dataset->num_lines, sizeof(Token*));
+		size_t capacity = dataset->num_lines;
 
 		if(tokens == NULL){
 			fprintf(stderr,"Error: failed to allocate memory for tokens\n");
@@ -196,6 +197,22 @@ Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tok
             			free(tokens);
             			return NULL;
         		}
+
+			if(count >= capacity){
+                                                Token** tmp_tokens = (Token**)realloc(tokens,sizeof(Token*) * (capacity*2));
+                                                if(tmp_tokens == NULL){
+                                                        // implement error reporting here
+                                                        fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
+                                                        for (size_t j = 0; j < count; j++) {
+                                                                free_token(tokens[j]);
+                                                        }
+                                                        free(copy);
+                                                        free(tokens);
+                                                        return NULL;
+                                                }
+                                                tokens = tmp_tokens;
+						capacity = capacity * 2;
+                        }
 			char* token = strtok(copy," ");
 			while(token != NULL){
 				size_t step = 0;
@@ -213,25 +230,28 @@ Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tok
 				while(text[step] != NULL){
 					Token* tok = create_token(text[step]);
 					//tok->frequency = 1;
+					if(count >= capacity){
+						Token** tmp_tokens = (Token**)realloc(tokens,sizeof(Token*) * (capacity*2));
+						if(tmp_tokens == NULL){
+							// implement error reporting here
+							fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
+                    					for (size_t j = 0; j < count; j++) {
+                        					free_token(tokens[j]);
+                    					}
+                    					for (size_t k = 0; k <= step; k++) {
+                        					free(text[k]);
+                    					}
+                    					free(text);
+                    					free(copy);
+							free(tokens);
+                    					return NULL;
+						}
+						tokens = tmp_tokens;
+						capacity = capacity * 2;
+					}
 					tokens[count] = tok;
 					count++;
-					step++;
-					Token** tmp_tokens = (Token**)realloc(tokens,sizeof(Token*) * (count + 1));
-					if(tmp_tokens == NULL){
-						// implement error reporting here
-						fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
-                    				for (size_t j = 0; j < count; j++) {
-                        				free_token(tokens[j]);
-                    				}
-                    				for (size_t k = 0; k <= step; k++) {
-                        				free(text[k]);
-                    				}
-                    				free(text);
-                    				free(copy);
-						free(tokens);
-                    				return NULL;
-					}
-					tokens = tmp_tokens;
+					step++;					
 				}
 				Token* seperator = create_token("_");
 				if(seperator == NULL){
@@ -246,13 +266,12 @@ Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tok
 				tokens[count++] = seperator;
 				token = strtok(NULL," ");
 				for (size_t k = 0; k < step; k++) {
-                                	free(text[k]);
+                                	if(text[k] != NULL){
+						free(text[k]);
+					}
                         	}
                         	free(text);
-			}
-
-			
-            		
+			}	
 			free(copy);
 		}
 		tokens[count] = NULL;
@@ -315,9 +334,19 @@ Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tok
                 	}
 			tokens = tmp_tokens;
             	}
-
+		
             	tokens[count++] = tok;
-
+		Token* seperator = create_token("_");
+			if(seperator == NULL){
+				fprintf(stderr,"Error: Failed to create sperator token\n");
+				for (size_t j = 0; j < count; j++) {
+					free_token(tokens[j]);
+				}
+      				free(copy);
+        			free(tokens);
+				return NULL;
+			}
+		tokens[count++] = seperator;
             	// Get the next token
             	token = strtok(NULL, delimiters);
         	}
