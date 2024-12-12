@@ -60,6 +60,11 @@ void test_combined_memory_leak();
 void test_tokenize_memory_leaks();
 void test_tokenize_functionality();
 void test_initialize_vocabulary_memory_leak();
+void test_count_pairs();
+void print_test_result(const char* test_name, int result);
+void test_find_most_freq_pairs();
+void print_tokens(Token** tokens, size_t size);
+void test_merge_most_freq_pair();
 
 #endif // TEST_BPE_H
 

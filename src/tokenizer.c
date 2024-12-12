@@ -6,6 +6,21 @@
 #include "hash_table.h"
 #include "../include/config.h"
 
+#define CLEANUP() {  \
+	if (text) { \
+		for (size_t k = 0; k < step; k++) {\
+			if (text[k] != NULL) { \
+				free(text[k]); \
+			}\
+		}\
+		free(text);\
+	}\
+	free(copy); \
+	for (size_t j = 0; j < count; j++) {\
+		free_token(tokens[j]);\
+	}\
+	free(tokens);\
+}
 
 //TODO: Centralize the logic for resizing a tokenizer's vocabulary.
 //	Functions to consider changing are resize_vocabulary, resize_hash_table, resize_dataset
@@ -166,199 +181,156 @@ int insert_into_token_map(HashTable* table, const char* key, size_t value){
 	table->size++;
 	return 0; // success
 }
+
+// Helper function to resize token array
+Token** resize_tokens(Token** tokens, size_t* capacity) {
+    size_t new_capacity = (*capacity) * 2;
+    Token** resized_tokens = (Token**)realloc(tokens, sizeof(Token*) * new_capacity);
+    if (resized_tokens == NULL) {
+        fprintf(stderr, "Error: Failed to resize tokens array\n");
+        return NULL;
+    }
+    *capacity = new_capacity;
+    return resized_tokens;
+}
+
+// Helper function to add a token
+int add_token(Token** tokens, size_t* count, size_t* capacity, Token* token) {
+    if (*count >= *capacity) {
+        tokens = resize_tokens(tokens, capacity);
+        if (tokens == NULL) {
+            return -1; // Failed to resize
+        }
+    }
+    tokens[(*count)++] = token;
+    return 0;
+}
 // Tokenize input text
 Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tokens) {
-	if(delimiters == NULL || dataset == NULL){
-		return NULL;
-	}
-
-	if(strlen(delimiters) == 0){
-		size_t count = 0;
-		Token** tokens = (Token**)calloc(dataset->num_lines, sizeof(Token*));
-		size_t capacity = dataset->num_lines;
-
-		if(tokens == NULL){
-			fprintf(stderr,"Error: failed to allocate memory for tokens\n");
-			return NULL;
-		}
-		// tokenize at chracter-level
-		for(size_t i = 0; i < dataset->num_lines;i++){
-			char* line = dataset->lines[i];
-			if(line == NULL || strlen(line) == 0){
-				continue;
-			}
-			char* copy = strdup(line);
-			if (copy == NULL) {
-            			fprintf(stderr, "Error: Failed to duplicate line\n");
-            			// Free already allocated tokens
-            			for (size_t j = 0; j < count; j++) {
-                			free_token(tokens[j]);
-            			}
-            			free(tokens);
-            			return NULL;
-        		}
-
-			if(count >= capacity){
-                                                Token** tmp_tokens = (Token**)realloc(tokens,sizeof(Token*) * (capacity*2));
-                                                if(tmp_tokens == NULL){
-                                                        // implement error reporting here
-                                                        fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
-                                                        for (size_t j = 0; j < count; j++) {
-                                                                free_token(tokens[j]);
-                                                        }
-                                                        free(copy);
-                                                        free(tokens);
-                                                        return NULL;
-                                                }
-                                                tokens = tmp_tokens;
-						capacity = capacity * 2;
-                        }
-			char* token = strtok(copy," ");
-			while(token != NULL){
-				size_t step = 0;
-				char** text = split_by_character((const char*)token);
-				if (text == NULL) {
-                			fprintf(stderr, "Error: Failed to split token into characters\n");
-                			// Free memory and clean up
-                			free(copy);
-                			for (size_t j = 0; j < count; j++) {
-                    				free_token(tokens[j]);
-                			}
-                			free(tokens);
-                			return NULL;
-            			}
-				while(text[step] != NULL){
-					Token* tok = create_token(text[step]);
-					//tok->frequency = 1;
-					if(count >= capacity){
-						Token** tmp_tokens = (Token**)realloc(tokens,sizeof(Token*) * (capacity*2));
-						if(tmp_tokens == NULL){
-							// implement error reporting here
-							fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
-                    					for (size_t j = 0; j < count; j++) {
-                        					free_token(tokens[j]);
-                    					}
-                    					for (size_t k = 0; k <= step; k++) {
-                        					free(text[k]);
-                    					}
-                    					free(text);
-                    					free(copy);
-							free(tokens);
-                    					return NULL;
-						}
-						tokens = tmp_tokens;
-						capacity = capacity * 2;
-					}
-					tokens[count] = tok;
-					count++;
-					step++;					
-				}
-				Token* seperator = create_token("_");
-				if(seperator == NULL){
-					fprintf(stderr,"Error: Failed to create sperator token\n");
-					for (size_t j = 0; j < count; j++) {
-            					free_token(tokens[j]);
-        				}
-        				free(copy);
-        				free(tokens);
-					return NULL;
-				}
-				tokens[count++] = seperator;
-				token = strtok(NULL," ");
-				for (size_t k = 0; k < step; k++) {
-                                	if(text[k] != NULL){
-						free(text[k]);
-					}
-                        	}
-                        	free(text);
-			}	
-			free(copy);
-		}
-		tokens[count] = NULL;
-		*num_tokens = count;
-		return tokens;
-	}else if (delimiters != NULL && strlen(delimiters) > 0) {
-    	size_t count = 0;
-    	size_t capacity = 10; // Initial capacity
-    	Token** tokens = (Token**)malloc(sizeof(Token*) * capacity);
-
-    	if (tokens == NULL) {
-        	fprintf(stderr, "Error: Failed to allocate memory for tokens\n");
-        	return NULL;
-    	}
-
-    // Tokenize by normal delimiters
-    for (size_t i = 0; i < dataset->num_lines; i++) {
-        char* line = dataset->lines[i];
-        if (line == NULL || strlen(line) == 0) {
-            continue; // Skip empty lines
-        }
-
-        char* copy = strdup(line);
-        if (copy == NULL) {
-            fprintf(stderr, "Error: Failed to duplicate line\n");
-            for (size_t j = 0; j < count; j++) {
-                free_token(tokens[j]);
-            }
-            free(tokens);
-            return NULL;
-        }
-
-        // Split line into tokens using strtok
-        char* token = strtok(copy, delimiters);
-        while (token != NULL) {
-            	Token* tok = create_token(token);
-		//tok->frequency = 1;
-            	if (tok == NULL) {
-                	fprintf(stderr, "Error: Failed to create token\n");
-                	for (size_t j = 0; j < count; j++) {
-                    	free_token(tokens[j]);
-                	}
-                	free(copy);
-                	free(tokens);
-                	return NULL;
-            	}
-
-            	// Add token to tokens array
-            	if (count >= capacity) {
-                	capacity *= 2;
-                	Token** tmp_tokens = (Token**)realloc(tokens, sizeof(Token*) * capacity);
-                	if (tmp_tokens == NULL) {
-                    		fprintf(stderr, "Error: Failed to reallocate memory for tokens\n");
-                    		for (size_t j = 0; j < count; j++) {
-                        		free_token(tokens[j]);
-                    		}
-                    		free(copy);
-				free(tokens);
-                    		return NULL;
-                	}
-			tokens = tmp_tokens;
-            	}
-		
-            	tokens[count++] = tok;
-		Token* seperator = create_token("_");
-			if(seperator == NULL){
-				fprintf(stderr,"Error: Failed to create sperator token\n");
-				for (size_t j = 0; j < count; j++) {
-					free_token(tokens[j]);
-				}
-      				free(copy);
-        			free(tokens);
-				return NULL;
-			}
-		tokens[count++] = seperator;
-            	// Get the next token
-            	token = strtok(NULL, delimiters);
-        	}
-
-        	free(copy); // Free the duplicated line
-    	}
-
-   	tokens[count] = NULL; // Null-terminate tokens array
-    	*num_tokens = count;  // Update the count of tokens
-    	return tokens;
-	}
-	return NULL;
+       	if (delimiters == NULL || dataset == NULL) { return NULL; }
+       	size_t count = 0; 
+	size_t capacity = 10;
+	size_t step = 0;
+	// Initial capacity for token array 
+	Token** tokens = (Token**)calloc(capacity, sizeof(Token*)); 
+	char** text = NULL; 
+	if (tokens == NULL) { 
+		fprintf(stderr, "Error: failed to allocate memory for tokens\n"); 
+		return NULL; 
+	} 
+	for (size_t i = 0; i < dataset->num_lines; i++) { 
+		char* line = dataset->lines[i]; 
+		if (line == NULL || strlen(line) == 0) { continue; } 
+		char* copy = strdup(line); 
+		if (copy == NULL) { 
+			fprintf(stderr, "Error: Failed to duplicate line\n"); 
+			CLEANUP(); 
+			return NULL; 
+		} 
+		char* token; 
+		if (strlen(delimiters) == 0) { 
+			// Character-level tokenization 
+			token = strtok(copy, " "); 
+			while (token != NULL) { 
+				step = 0; 
+				text = split_by_character((const char*)token); 
+				if (text == NULL) { 
+					fprintf(stderr, "Error: Failed to split token into characters\n"); 
+					CLEANUP(); 
+					return NULL; 
+				} 
+				while (text[step] != NULL) { 
+					Token* tok = create_token(text[step]); 
+					if (tok == NULL) { 
+						fprintf(stderr, "Error: Failed to create token\n"); 
+						CLEANUP(); 
+						return NULL; 
+					} 
+					if (count >= capacity) { 
+						capacity *= 2; 
+						Token** tmp_tokens = (Token**)realloc(tokens, sizeof(Token*) * capacity); 
+						if (tmp_tokens == NULL) {
+							fprintf(stderr, "Error: Failed to reallocate memory for tokens\n"); 
+							free_token(tok); CLEANUP(); 
+							return NULL;
+					       	} 
+						tokens = tmp_tokens; 
+					} 
+					tokens[count++] = tok; 
+					step++; 
+				} 
+				// Free text and its elements 
+				for (size_t k = 0; k < step; k++) { 
+					if (text[k] != NULL) { 
+						free(text[k]); 
+					} 
+				} 
+				free(text); 
+				text = NULL; 
+				Token* separator = create_token("_"); 
+				if (separator == NULL) { 
+					fprintf(stderr, "Error: Failed to create separator token\n"); 
+					CLEANUP(); 
+					return NULL; 
+				} 
+				if (count >= capacity) { 
+					capacity *= 2; 
+					Token** tmp_tokens = (Token**)realloc(tokens, sizeof(Token*) * capacity); 
+					if (tmp_tokens == NULL) 
+					{ 
+						fprintf(stderr, "Error: Failed to reallocate memory for tokens\n"); 
+						free_token(separator); CLEANUP(); return NULL; 
+					} 
+					tokens = tmp_tokens; 
+				} 
+				tokens[count++] = separator; 
+				token = strtok(NULL, " "); 
+			} 
+		} else { 
+			// Normal delimiter-based tokenization 
+			token = strtok(copy, delimiters); 
+			while (token != NULL) { 
+				Token* tok = create_token(token); 
+				if (tok == NULL) { 
+					fprintf(stderr, "Error: Failed to create token\n"); 
+					CLEANUP(); 
+					return NULL; 
+				} if (count >= capacity) { 
+					capacity *= 2; 
+					Token** tmp_tokens = (Token**)realloc(tokens, sizeof(Token*) * capacity); 
+					if (tmp_tokens == NULL) { 
+						fprintf(stderr, "Error: Failed to reallocate memory for tokens\n"); 
+						free_token(tok); CLEANUP(); 
+						return NULL; 
+					} 
+					tokens = tmp_tokens; 
+				} 
+				tokens[count++] = tok; 
+				Token* separator = create_token("_"); 
+				if (separator == NULL) { 
+					fprintf(stderr, "Error: Failed to create separator token\n"); 
+					CLEANUP(); 
+					return NULL; 
+				} 
+				if (count >= capacity) { 
+					capacity *= 2; 
+					Token** tmp_tokens = (Token**)realloc(tokens, sizeof(Token*) * capacity); 
+					if (tmp_tokens == NULL) { 
+						fprintf(stderr, "Error: Failed to reallocate memory for tokens\n"); 
+						free_token(separator); 
+						CLEANUP(); 
+						return NULL; 
+					} tokens = tmp_tokens; 
+				} 
+				tokens[count++] = separator; 
+				token = strtok(NULL, delimiters); 
+			} 
+		} 
+		free(copy); 
+	} 
+	tokens[count] = NULL; 
+	*num_tokens = count; 
+	return tokens;
 }
 
 // Split a string character wise.
@@ -398,9 +370,11 @@ char** split_by_character(const char* input){
 
 //
 
-void free_tokens(char** tokens, size_t num_tokens) {
+void free_tokens(Token** tokens, size_t num_tokens) {
     for (size_t i = 0; i < num_tokens; i++) {
-        free(tokens[i]);
+	    if(tokens[i] != NULL){
+        	free_token(tokens[i]);
+	    }
     }
     free(tokens);
 }
@@ -620,7 +594,7 @@ void merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, siz
 	size_t num_tokens = 0;
 	Token** tokens = tokenize(dataset," ",&num_tokens);
 
-	if(num_tokens != 3){
+	if(num_tokens != 4){
 		fprintf(stderr, "Error: Failed to sperate token pairs %s\n",text);
 		free_dataset(dataset);
 		for(size_t i = 0; i < num_tokens;i++){
@@ -698,4 +672,6 @@ void BPE(Tokenizer* tokenizer, Dataset* dataset){
 		merge_most_freq_pair(tokenized_data, most_freq_pair,num_tokens);
 		add_to_vocabulary(tokenizer,(const char*) most_freq_pair->key);
 	}
+
+	free_tokens(tokenized_data,num_tokens);
 }

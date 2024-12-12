@@ -366,3 +366,144 @@ void test_initialize_vocabulary_memory_leak() {
         fprintf(stderr, "Tokenizer was not nullified properly.\n");
     }
 }
+
+void test_count_pairs(){
+	printf("\nTesting count_pairs function for memory leaks and functionality....\n");
+
+	Dataset* dataset = initialize_dataset(10);
+	if(!dataset){
+		fprintf(stderr,"\nFailed to create dataset.\n");
+		return;
+	}
+
+	add_line(dataset,"Hello");
+	add_line(dataset,"world.");
+
+	Tokenizer* tokenizer = create_tokenizer(10);
+	if (!tokenizer) {
+        	fprintf(stderr, "Failed to create tokenizer.\n");
+        	free_dataset(dataset);
+        	return;
+	}
+
+	size_t num_tokens;
+	Token** tokenized_data = tokenize(dataset, "",&num_tokens);
+	count_pairs(tokenizer,tokenized_data,num_tokens);
+
+	free_tokens(tokenized_data,num_tokens);
+	free_tokenizer(&tokenizer);
+	free_dataset(dataset);
+
+	if (!tokenizer) {
+        	fprintf(stderr, "Tokenizer successfully freed and nullified.\n");
+    	} else {
+        	fprintf(stderr, "Tokenizer was not nullified properly.\n");
+    	}
+}
+
+void print_test_result(const char* test_name, int result) {
+    printf("%s: %s\n", test_name, result ? "PASSED" : "FAILED");
+}
+
+// Unit test for find_most_freq_pairs
+void test_find_most_freq_pairs() {
+    printf("Running find_most_freq_pairs Unit Test...\n");
+
+    // Step 1: Create and populate the hash table
+    HashTable* hash_table = create_hash_table(10);
+    if (hash_table == NULL) {
+        fprintf(stderr, "Failed to create hash table\n");
+        return;
+    }
+
+    // Insert some pairs into the hash table
+    insert_into_hash_table(hash_table, "a b", 3);
+    insert_into_hash_table(hash_table, "b c", 5); // Most frequent
+    insert_into_hash_table(hash_table, "c d", 2);
+
+    // Step 2: Call the function to test
+    HashEntry* most_frequent = find_most_freq_pairs(hash_table);
+
+    // Step 3: Validate the result
+    int result = 1; // Assume test passes initially
+    if (most_frequent == NULL) {
+        fprintf(stderr, "Failed to find the most frequent pair\n");
+        result = 0;
+    } else if (strcmp(most_frequent->key, "b c") != 0 || most_frequent->value != 5) {
+        fprintf(stderr, "Expected 'b c' with frequency 5, but got '%s' with frequency %zu\n",
+                most_frequent->key, most_frequent->value);
+        result = 0;
+    }
+
+    // Print the test result
+    print_test_result("find_most_freq_pairs", result);
+
+    // Step 4: Clean up
+    free_hash_table(hash_table);
+}
+
+// Helper function to print tokenized data
+void print_tokens(Token** tokens, size_t size) {
+    printf("Tokenized Data: ");
+    for (size_t i = 0; i < size; i++) {
+        if (tokens[i] != NULL) {
+            printf("%s ", tokens[i]->text);
+        }
+    }
+    printf("\n");
+}
+
+// Unit test for merge_most_freq_pair
+void test_merge_most_freq_pair() {
+    printf("Running merge_most_freq_pair Unit Test...\n");
+
+    // Step 1: Create tokenized data
+    size_t size = 5;
+    Token* tokenized_data[] = {
+        create_token("a"),
+        create_token("b"),
+        create_token("c"),
+        create_token("a"),
+        create_token("b")
+    };
+
+    // Step 2: Create most frequent pair
+    HashEntry most_freq_pair = {.key = strdup("a b"), .value = 3};
+
+    // Step 3: Print initial tokens
+    print_tokens(tokenized_data, size);
+
+    // Step 4: Call the function to test
+    merge_most_freq_pair(tokenized_data, &most_freq_pair, size);
+
+    // Step 5: Validate the results
+    int result = 1; // Assume test passes
+    if (strcmp(tokenized_data[0]->text, "ab") != 0) {
+        fprintf(stderr, "Expected first token to be 'ab', got '%s'\n", tokenized_data[0]->text);
+        result = 0;
+    }
+    if (strcmp(tokenized_data[1]->text, "c") != 0) {
+        fprintf(stderr, "Expected second token to be 'c', got '%s'\n", tokenized_data[1]->text);
+        result = 0;
+    }
+    if (strcmp(tokenized_data[2]->text, "a") != 0) {
+        fprintf(stderr, "Expected third token to be 'a', got '%s'\n", tokenized_data[2]->text);
+        result = 0;
+    }
+    if (tokenized_data[4] != NULL) {
+        fprintf(stderr, "Expected last token to be NULL, but it's not\n");
+        result = 0;
+    }
+
+    // Print final tokens and test result
+    print_tokens(tokenized_data, size - 1); // Size reduced by 1
+    print_test_result("merge_most_freq_pair", result);
+
+    // Step 6: Clean up
+    for (size_t i = 0; i < size; i++) {
+        if (tokenized_data[i] != NULL) {
+            free_token(tokenized_data[i]);
+        }
+    }
+    free(most_freq_pair.key);
+}
