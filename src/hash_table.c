@@ -3,21 +3,35 @@
 #include <string.h>
 #include <stdio.h>
 
-// A simple hash function for strings
+// A implementation of FNV Hash function for strings given the capacity. 
 size_t hash_function(const char* key, size_t capacity) {
-    size_t hash = 0;
+    unsigned long  hash = 14695981039346656037u;
+
     while (*key) {
-        hash = (hash * 31 + *key) % capacity; // Multiply by a prime number
-        key++;
+	    hash ^= (unsigned char) *key;
+	    hash *= 1099511628211;
+	    key++;
     }
-    return hash;
+    return (size_t)hash % capacity;
 }
 
-// Creates a new hash table with the specified capacity
+size_t hash2(const char* key, size_t size) {
+	size_t hash = 31;
+	while(*key){
+		hash ^= *key;
+		key++;
+	}
+    return 1 + ((hash ^ 0x5bd1e995) % (size - 1));  // XOR with a magic constant
+}
+// Creates a new hash table with the specified capacity. This is the main function that is responsible for allocating memory
+// for new hash table. it returns a pointer to the structure giving up authority to whoever called the function. Note that you are responsible for freeing the memory after usage.
 HashTable* create_hash_table(size_t capacity) {
+
+	// Allocate enough memory for a table
     HashTable* table = malloc(sizeof(HashTable));
     if (!table) return NULL;
 
+	// Note that entries of the hash table has been initialized to NULL.
     table->entries = calloc(capacity, sizeof(HashEntry*));
     if (!table->entries) {
         free(table);
@@ -47,22 +61,23 @@ void increment_frequency_hash_table(HashTable* hash_table, const char* key) {
         resize_hash_table(hash_table);
     }
     size_t index = hash_function(key, hash_table->capacity);
+    size_t index1 = hash2(key,hash_table->capacity);
 
-    // Linear probing for collision resolution
-    while (hash_table->entries[index] != NULL) {
-        if (strcmp(hash_table->entries[index]->key, key) == 0) {
-            hash_table->entries[index]->value++;
+    size_t step = 0;
+    // double hashing for collision resolution
+    while (step < hash_table->capacity) {
+	    size_t probing_index = (index + step*index1) % hash_table->capacity;
+	    HashEntry* entry = hash_table->entries[probing_index];
+	    if(entry == NULL){
+		    fprintf(stderr, "Error: Key '%s' not found in hash table\n", key);
+	    	return; // the key is not there.
+	    }
+        if (strcmp(entry->key, key) == 0) {
+            hash_table->entries[probing_index]->value++;
             return;
         }
-        index = (index + 1) % hash_table->capacity; // Move to next slot
+        step++;
     }
-
-    // Add a new entry
-    HashEntry* new_entry = malloc(sizeof(HashEntry));
-    new_entry->key = strdup(key); // Duplicate the key
-    new_entry->value = 1;
-    hash_table->entries[index] = new_entry;
-    hash_table->size++;
 }
 
 void resize_hash_table(HashTable* hash_table) {
@@ -81,13 +96,23 @@ void resize_hash_table(HashTable* hash_table) {
         if (hash_table->entries[i]) {
             HashEntry* entry = hash_table->entries[i];
             size_t new_index = hash_function(entry->key, new_capacity);
+	    size_t new_index1 = hash2(entry->key,new_capacity);
+		size_t step = 0;
+            // Double hashing  to resolve collisions in the new table
+            while (step < new_capacity) {
+    	        size_t probing_index = (new_index + step*new_index1) % new_capacity;
+        	if(new_entries[probing_index] == NULL){
+			new_entries[probing_index] = entry;
+			break;
+		}
+        	step++;
+    	     } // Move entry to the new table
 
-            // Linear probing to resolve collisions in the new table
-            while (new_entries[new_index] != NULL) {
-                new_index = (new_index + 1) % new_capacity;
-            }
-
-            new_entries[new_index] = entry; // Move entry to the new table
+	    if(step == new_capacity){
+	    	fprintf(stderr,"Error: Failed to rehash key '%s' during resizing.\n", entry->key);
+		free(new_entries);
+		return;
+	    }
         }
     }
 
@@ -102,9 +127,11 @@ void resize_hash_table(HashTable* hash_table) {
 // Retrieves the frequency of a given key
 int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*, const char*)) {
     size_t index = hash_function(key, hash_table->capacity);
+    size_t index1 = hash2(key,hash_table->capacity);
+
     size_t step = 0;
     while (step < hash_table->capacity) {
-	    size_t probing_index = (index + step) % hash_table->capacity;
+	    size_t probing_index = (index + step*index1) % hash_table->capacity;
 	    HashEntry* entry = hash_table->entries[probing_index];
 	    if(entry ==NULL){
 	    	return -1;
@@ -117,24 +144,27 @@ int get_value(HashTable* hash_table, const char* key, int (cmpfunc)(const char*,
 
     return -1; // Key not found
 }
-
+// This function insert an HashEntry into the hash table given the key. Note that if the key already exist in the hash table, it simply update the entry's value to the new value.
 int insert_into_hash_table(HashTable* table, const char* key, size_t value){
 	// Compute the initial hash index
     size_t index = hash_function(key, table->capacity);
+    size_t index1 = hash2(key,table->capacity);
     size_t step = 0;
 
     // Use linear probing to find an empty slot or existing key
     while (step < table->capacity) {
-        size_t probing_index = (index + step) % table->capacity;
+        size_t probing_index = (index + step*index1) % table->capacity;
         HashEntry* entry = table->entries[probing_index];
 
         if (entry == NULL) {
             // Insert a new entry if the slot is empty
-            entry = (HashEntry*)malloc(sizeof(HashEntry));
-            if (entry == NULL) {
+            HashEntry* entry1 = (HashEntry*)malloc(sizeof(HashEntry));
+            if (entry1 == NULL) {
                 fprintf(stderr, "Error allocating memory for hash table entry\n");
                 return -1;  // Error allocating memory
             }
+
+	    entry = entry1;
             entry->key = strdup(key);
             if (entry->key == NULL) {
                 fprintf(stderr, "Error allocating memory for hash table key\n");

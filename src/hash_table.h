@@ -34,5 +34,6 @@ int insert_into_hash_table(HashTable* table, const char* key, size_t value);
 
 void reset_hash_table(HashTable* hash_table);
 size_t hash_function(const char* key, size_t capacity);
+size_t hash2(const char* key, size_t size);
 #endif // HASH_TABLE_H
 

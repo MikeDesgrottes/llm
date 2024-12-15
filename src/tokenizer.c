@@ -105,10 +105,14 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
     }
 
     size_t hash_index = hash_function(token, tokenizer->max_vocab_size);
-    size_t final_index = hash_index;
-    size_t step = 0;
+    size_t index1 = hash2(token,tokenizer->max_vocab_size);
 
+
+    size_t step = 0;
+    size_t final_index = (hash_index + step*index1) % tokenizer->max_vocab_size;
     while(step < tokenizer->max_vocab_size){
+	final_index = (hash_index + step*index1) % tokenizer->max_vocab_size;
+
     	if(tokenizer->vocabulary[final_index] == NULL){
 		tokenizer->vocabulary[final_index] = new_token;
 		tokenizer->vocab_size++;
@@ -122,8 +126,6 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 		}
 		return;
 	}
-
-	final_index = (final_index + step) % tokenizer->max_vocab_size;
 	step++;
     }
     fprintf(stderr,"Error: Unable to find an empty slot in vocabulary after probing\n");
@@ -205,7 +207,8 @@ int add_token(Token** tokens, size_t* count, size_t* capacity, Token* token) {
     tokens[(*count)++] = token;
     return 0;
 }
-// Tokenize input text
+// Tokenize input text:wq
+//
 Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tokens) {
        	if (delimiters == NULL || dataset == NULL) { return NULL; }
        	size_t count = 0; 

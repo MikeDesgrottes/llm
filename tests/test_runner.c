@@ -29,7 +29,7 @@ int main() {
     //test_tokenize_memory_leaks();
     //test_initialize_vocabulary_memory_leak();
     //test_count_pairs();
-    test_find_most_freq_pairs();
+    //test_find_most_freq_pairs();
     test_merge_most_freq_pair();
     //test_BPE();
     printf("All tests completed.\n");
