@@ -468,13 +468,13 @@ void test_merge_most_freq_pair() {
     };
 
     // Step 2: Create most frequent pair
-    HashEntry most_freq_pair = {.key = strdup("a b"), .value = 3};
+    HashEntry most_freq_pair = {.key = strdup("a b"), .value = 2};
 
     // Step 3: Print initial tokens
     print_tokens(tokenized_data, size);
 
     // Step 4: Call the function to test
-    merge_most_freq_pair(tokenized_data, &most_freq_pair, size);
+    merge_most_freq_pair(tokenized_data, &most_freq_pair, &size);
 
     // Step 5: Validate the results
     int result = 1; // Assume test passes
@@ -486,7 +486,7 @@ void test_merge_most_freq_pair() {
         fprintf(stderr, "Expected second token to be 'c', got '%s'\n", tokenized_data[1]->text);
         result = 0;
     }
-    if (strcmp(tokenized_data[2]->text, "a") != 0) {
+    if (strcmp(tokenized_data[2]->text, "ab") != 0) {
         fprintf(stderr, "Expected third token to be 'a', got '%s'\n", tokenized_data[2]->text);
         result = 0;
     }
@@ -496,7 +496,7 @@ void test_merge_most_freq_pair() {
     }
 
     // Print final tokens and test result
-    print_tokens(tokenized_data, size - 1); // Size reduced by 1
+    print_tokens(tokenized_data, size); // Size reduced by 1
     print_test_result("merge_most_freq_pair", result);
 
     // Step 6: Clean up

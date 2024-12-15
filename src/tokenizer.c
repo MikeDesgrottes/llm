@@ -454,7 +454,7 @@ void count_pairs(Tokenizer* tokenizer, Token** tokens, size_t num_tokens){
 		char* pair_key = create_pair_key(current->text,next->text);
 		if (pair_key == NULL) {
             		fprintf(stderr, "Error: Failed to create pair key\n");
-            		continue;
+			return;
         	}
 
         	// Update the pair frequency
@@ -584,62 +584,57 @@ int token_exists_in_vocabulary(Tokenizer* tokenizer, const char* text){
 	return get_value(tokenizer->token_map,text,strcmp);
 }
 
-void merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, size_t size){
-	char* text = most_freq_pair->key;
-	Dataset* dataset = initialize_dataset(1);
-	int res = add_line(dataset,(const char*)text);
-	
-	if(res == -1){
-		fprintf(stderr,"Error: failed to add line \"%s\" to dataset.\n",text);
-		return;
-	}
-	// tokenize the pairs by space since that's the seperator given by count pairs ex: "a b" becomes "a" and "b". num_tokens should always return 3 here.
-	size_t num_tokens = 0;
-	Token** tokens = tokenize(dataset," ",&num_tokens);
+void merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, size_t* size){
+	char* text = strdup(most_freq_pair->key);
 
-	if(num_tokens != 4){
-		fprintf(stderr, "Error: Failed to sperate token pairs %s\n",text);
-		free_dataset(dataset);
-		for(size_t i = 0; i < num_tokens;i++){
-			free_token(tokens[i]);
-		}
-		free(tokens);
+	if(!text){
+		fprintf(stderr,"Error while duplicating most frequent pair\n");
 		return;
 	}
-	Token* merged_token = merge_tokens(tokens[0],tokens[1]);
+	Token* token1 = create_token(strtok(text," "));
+	Token* token2  = create_token(strtok(NULL, " "));
+
+	if(!token1 || !token2){
+		fprintf(stderr, "Error while tokenizing most frequent pair\n");
+		free(text);
+		if(token1) free_token(token1);
+		if(token2) free_token(token2);
+		return;
+	}
+	Token* merged_token = merge_tokens(token1,token2);
 	if(merged_token == NULL){
-		fprintf(stderr,"Error: Failed to merge tokens %s and %s\n",tokens[0]->text, tokens[1]->text);
-		free_dataset(dataset);
-                for(size_t i = 0; i < num_tokens;i++){
-                        free_token(tokens[i]);
-                }
-                free(tokens);
+		fprintf(stderr,"Error: Failed to merge tokens %s and %s\n",token1->text, token2->text);
+		free_token(token1);
+		free_token(token2);
 		return;
 	}
 
-	for(size_t i = 0; i < size - 1;i++){
+	for(size_t i = 0; i < *size - 1;i++){
 		Token* current = tokenized_data[i];
 		Token* next = tokenized_data[i + 1];
-		if(strcmp(current->text, tokens[0]->text) == 0 && strcmp(next->text, tokens[1]->text) == 0){
+
+		if(current && next && strcmp(current->text, token1->text) == 0 && strcmp(next->text, token2->text) == 0){
 			free_token(current);
-			tokenized_data[i] = merged_token;
+			tokenized_data[i] = create_token(merged_token->text);
 
 			free_token(next);
 			tokenized_data[i + 1] = NULL;
-			for(size_t j = i + 1; j < size - 1; j++){
+			for(size_t j = i + 1; j < *size - 1; j++){
 				tokenized_data[j] = tokenized_data[j + 1];
 			}
-			size--;
+			tokenized_data[*size - 1] = NULL;
+			(*size)--;
 			i--;
 		}
 	}
-
+	free_token(token1);
+	free_token(token2);
+	//tokenized_data[size] = NULL;
 	// Cleanup
-	free_dataset(dataset);
-	for (size_t i = 0; i < num_tokens; i++) {
-    		free_token(tokens[i]);
-	}
-	free(tokens);
+	//free_dataset(dataset);
+	free(text);
+	free_token(merged_token);
+	//free(tokens);
 
 }
 // Code to implement BPE
@@ -672,7 +667,7 @@ void BPE(Tokenizer* tokenizer, Dataset* dataset){
 			break; // no more frequent pairs left.
 		}
 
-		merge_most_freq_pair(tokenized_data, most_freq_pair,num_tokens);
+		merge_most_freq_pair(tokenized_data, most_freq_pair,&num_tokens);
 		add_to_vocabulary(tokenizer,(const char*) most_freq_pair->key);
 	}
 
