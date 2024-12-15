@@ -34,7 +34,7 @@ void count_pairs(Tokenizer* tokenizer, Token** tokens, size_t num_tokens);
 HashEntry* find_most_freq_pairs(HashTable* hash_table);
 char* create_pair_key(const char* token1, const char* token2);
 void BPE(Tokenizer* tokenizer, Dataset* dataset);
-void merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, size_t* size);
+char*  merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, size_t* size);
 int insert_into_token_map(HashTable* table, const char* key, size_t value);
 Token** resize_tokens(Token** tokens, size_t* capacity);
 int add_token(Token** tokens, size_t* count, size_t* capacity, Token* token);

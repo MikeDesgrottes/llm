@@ -1,5 +1,5 @@
 CC = gcc
-CFLAGS = -Wall -Werror -g  
+CFLAGS = -Wall -Werror -g -DDEBUG_LEVEL=0 
 
 SRC = src/main.c src/tokenizer.c src/utils.c
 OBJ = $(SRC:.c=.o)

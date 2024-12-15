@@ -474,7 +474,7 @@ void test_merge_most_freq_pair() {
     print_tokens(tokenized_data, size);
 
     // Step 4: Call the function to test
-    merge_most_freq_pair(tokenized_data, &most_freq_pair, &size);
+    char* res = merge_most_freq_pair(tokenized_data, &most_freq_pair, &size);
 
     // Step 5: Validate the results
     int result = 1; // Assume test passes
@@ -506,4 +506,5 @@ void test_merge_most_freq_pair() {
         }
     }
     free(most_freq_pair.key);
+    free(res);
 }
