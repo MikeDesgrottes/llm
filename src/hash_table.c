@@ -236,7 +236,7 @@ int insert_into_hash_table(HashTable* table, const char* key, size_t value){
             return 0;  // Success
         } else if (strcmp(entry->key, key) == 0) {
             // If the key already exists, update its value
-            entry->value = value;
+            entry->value += value;
             return 0;  // Success
         }
 

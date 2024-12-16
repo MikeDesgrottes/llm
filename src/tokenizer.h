@@ -49,5 +49,7 @@ Token* merge_tokens(Token* token1, Token* token2);
 int token_exists_in_vocabulary(Tokenizer* tokenizer,const char* text);
 Token* find_most_frequent_token_pair(Token** tokens, size_t num_tokens);
 void free_token_array(Token** tokens, size_t num_tokens);
+Token* create_token_with_frequency(const char* text, size_t freq);
+void add_merged_token(Tokenizer* tokenizer, const char* text, size_t freq);
 #endif // TOKENIZER_H
 

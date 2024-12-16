@@ -31,7 +31,7 @@ int main() {
     //test_count_pairs();
     //test_find_most_freq_pairs();
     //test_merge_most_freq_pair();
-    test_BPE1();
+    test_BPE();
     printf("All tests completed.\n");
     return 0;
 }

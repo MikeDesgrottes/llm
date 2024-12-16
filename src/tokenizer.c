@@ -108,13 +108,13 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
     }
 
     size_t hash_index = hash_function(token, tokenizer->max_vocab_size);
-    size_t index1 = hash2(token,tokenizer->max_vocab_size);
+    //size_t index1 = hash2(token,tokenizer->max_vocab_size);
 
 
     size_t step = 0;
-    size_t final_index = (hash_index + step*index1) % tokenizer->max_vocab_size;
+    size_t final_index = (hash_index + step*step) % tokenizer->max_vocab_size;
     while(step < tokenizer->max_vocab_size){
-	final_index = (hash_index + step*index1) % tokenizer->max_vocab_size;
+	final_index = (hash_index + step*step) % tokenizer->max_vocab_size;
 
     	if(tokenizer->vocabulary[final_index] == NULL){
 		tokenizer->vocabulary[final_index] = new_token;
@@ -648,6 +648,40 @@ char*  merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, s
 	//free(tokens);
 
 }
+
+Token* create_token_with_frequency(const char* text, size_t freq){
+	Token* res = create_token(text);
+	if(!res){ DEBUG_TOK("Error could not create new token."); return NULL;}
+
+	res->frequency = freq;
+	return res;
+}
+
+
+void add_merged_token(Tokenizer* tokenizer, const char* text, size_t freq){
+	int index = get_value(tokenizer->token_map, text, strcmp);
+
+	if(index >=0){
+		tokenizer->vocabulary[index]->frequency += freq;
+	}else{
+		index = hash_function(text,tokenizer->max_vocab_size);
+		size_t step = 0;
+		while(step < tokenizer->max_vocab_size){
+			size_t probing_index = (index + step*step) % tokenizer->max_vocab_size;
+			if(tokenizer->vocabulary[probing_index] == NULL){
+				Token* token = create_token_with_frequency(text, freq);
+				if(!token){ DEBUG_TOK("Error: Failed to create token for %s", text); return;}
+				tokenizer->vocabulary[probing_index] = token;
+				insert_into_token_map(tokenizer->token_map, text, probing_index);
+				tokenizer->vocab_size++;
+				return;
+			}
+			step++;
+		}
+		DEBUG_TOK("Failed to add merged token %s to the vocabulary",text);
+	}
+
+}
 // Code to implement BPE
 //
 
@@ -687,7 +721,7 @@ void BPE(Tokenizer* tokenizer, Dataset* dataset){
 			free_tokens(tokenized_data,num_tokens);
 			return;
 		}
-		add_to_vocabulary(tokenizer,(const char*) res);
+		add_merged_token(tokenizer,(const char*) res, most_freq_pair->value);
 		free(res);
 
 		if(merges % 1000 == 0) {  // Print every 1000 merges
