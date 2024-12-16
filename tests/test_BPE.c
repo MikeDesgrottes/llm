@@ -2,7 +2,11 @@
 #include <stdlib.h>
 #include "../src/tokenizer.h"
 #include "../src/dataset.h"
+#include "../include/config.h"
+#include "../include/debug.h"
+#include "../src/utils.h"
 #include <assert.h>
+
 void print_vocabulary(Tokenizer* tokenizer, size_t* valid_count);
 
 // Helper function to print tokenized data
@@ -507,4 +511,23 @@ void test_merge_most_freq_pair() {
     }
     free(most_freq_pair.key);
     free(res);
+}
+
+void test_BPE1(){
+	Dataset* dataset = initialize_dataset(10000);
+	int res = load_dataset_from_file(dataset,"/mnt/data/llm/datasets/ebk2.txt");
+	if(res == -1){
+		DEBUG_TOK("Error while loading file.");
+		return;
+	}
+
+	Tokenizer* tokenizer = create_tokenizer(MAX_VOCAB_SIZE);
+	BPE(tokenizer, dataset);
+
+	//  save the vocabulary to a file
+	size_t num_tokens = 0;
+	print_vocabulary(tokenizer,&num_tokens);
+	//Cleanup
+	free_tokenizer(&tokenizer);
+	free_dataset(dataset);
 }

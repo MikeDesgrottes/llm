@@ -65,6 +65,7 @@ void print_test_result(const char* test_name, int result);
 void test_find_most_freq_pairs();
 void print_tokens(Token** tokens, size_t size);
 void test_merge_most_freq_pair();
+void test_BPE1();
 
 #endif // TEST_BPE_H
 

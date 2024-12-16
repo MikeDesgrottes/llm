@@ -464,7 +464,7 @@ void count_pairs(Tokenizer* tokenizer, Token** tokens, size_t num_tokens){
         	int frequency = get_value(tokenizer->pair_freqs, pair_key, strcmp);
         	if (frequency >= 0) {
             		//insert_into_hash_table(tokenizer->pair_freqs, pair_key, frequency + 1);
-			increment_frequency_hash_table(tokenizer->pair_freqs, pair_key);
+			increment_frequency_hash_table(tokenizer->pair_freqs, pair_key)
         	}else{
             		insert_into_hash_table(tokenizer->pair_freqs, pair_key, 1);
         	}
