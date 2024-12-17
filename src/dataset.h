@@ -7,11 +7,51 @@
 
 // Dataset structure
 typedef struct {
-    char **lines;       // Array of pointers to lines of text
-    size_t num_lines;   // Number of lines in the dataset
+    char* filename;            // Name of the file
+    size_t size;              // File size
+    time_t last_modified;     // When file was last changed
+    char* category;           // What category this file belongs to
+} FileMetadata;
+
+typedef struct {
+    FILE* file_handle;          // The actual connection to the file on disk
+    char* filepath;             // Full path to the file
+    char* buffer;               // For buffered reading if needed
+    size_t buffer_size;
+    bool is_open;              // Track if file is currently open
+    FileMetadata metadata;      // Information about the file
+} TextFile;
+
+typedef struct{
+	TextFile** files;
+	size_t num_files;
+	size_t capacity;
+	char* categoryname;
+} Category;
+
+
+typedef struct {
+    Category **lines;       // Array of pointers to lines of text
+    size_t num_categories;   // Number of lines in the dataset
     size_t capacity;    // Allocated capacity for the lines array
 } Dataset;
 
+
+//File Creation and Management:
+TextFile* create_text_file(const char* filenamei, size_t initial_buffer_size);
+int open_text_file(TextFile* file, const char* mode);
+void close_text_file(TextFile* file);
+void destroy_text_file(TextFile* file);
+void reset_text_file(TextFile* file);
+
+//Buffer Management:
+//
+//
+void initialize_buffer(TextFile* file, size_t size);
+int resize_buffer(TextFile* file, size_t new_size);
+void clear_buffer(TextFile* file);
+void flush_buffer(TextFile* file)
+//Dataset functions
 Dataset *initialize_dataset(size_t initial_capacity);
 int add_line(Dataset *dataset, const char *line);
 void free_dataset(Dataset *dataset);
