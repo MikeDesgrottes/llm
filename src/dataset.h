@@ -31,7 +31,7 @@ typedef struct{
 
 
 typedef struct {
-    Category **lines;       // Array of pointers to lines of text
+    Category **categories;       // Array of pointers to lines of text
     size_t num_categories;   // Number of lines in the dataset
     size_t capacity;    // Allocated capacity for the lines array
 } Dataset;
@@ -63,4 +63,15 @@ void clear_dataset(Dataset* dataset);
 size_t search_data(Dataset* dataset, char* target, int (*cmp_func)(char*, char*));
 size_t* search_data_all(Dataset* dataset, char* target, int (*cmp_func)(char*, char*), size_t* match_count);
 
+int get_modification_time(TextFile* file, time_t* time);
+int get_file_size(TextFile* file, size_t* size);
+void update_metadata(TextFile* file);
+int load_dataset_from_directory(Dataset* dataset, const char* directory_path);
+int add_category_to_dataset(Dataset* dataset, const char* category_name);
+Dataset* create_dataset(size_t initial_capacity);
+
+// Category Management.
+//
+int add_file_to_category(Category* category, const char* filepath);
+Category* create_category(const char* name, size_t initial_capacity);
 #endif
