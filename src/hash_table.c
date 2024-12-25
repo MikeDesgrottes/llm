@@ -94,7 +94,7 @@ HashEntry* create_hash_entry(const void* key, size_t key_size, const void* value
 
 // Creates a new hash table with the specified capacity. This is the main function that is responsible for allocating memory
 // for new hash table. it returns a pointer to the structure giving up authority to whoever called the function. Note that you are responsible for freeing the memory after usage.
-HashTable* create_hash_table(size_t capacity, HashOperations ops, size_t key_size, size_t value_size) {
+HashTable* create_hash_table(size_t capacity) {
 
 	// Allocate enough memory for a table
     HashTable* table = malloc(sizeof(HashTable));
@@ -106,18 +106,9 @@ HashTable* create_hash_table(size_t capacity, HashOperations ops, size_t key_siz
         free(table);
         return NULL;
     }
-
-    if (!ops.hash_function || !ops.compare_keys || !ops.free_key || !ops.free_value) {
-    	fprintf(stderr, "Error: Required hash table operations missing\n");
-    	free(table->entries);
-	free(table);
-    	return NULL;
-	}
     table->capacity = capacity;
-    table->key_size = key_size;
-    table->value_size = value_size;
     table->size = 0;
-    table->ops = ops;
+    create_standard_ops(table);
     table->load_factor = 0;
     return table;
 }
@@ -252,7 +243,7 @@ int get_value(HashTable* hash_table, const void* key, void* dest) {
     return -1; // Key not found
 }
 // This function insert an HashEntry into the hash table given the key. Note that if the key already exist in the hash table, it simply update the entry's value to the new value.
-int insert_into_hash_table(HashTable* table, const void* key, const void* value){
+int insert_into_hash_table(HashTable* table, const void* key, const void* value, size_t key_size, size_t value_size){
 
 	if(table == NULL || key == NULL || value == NULL){
 		DEBUG_HASH("Error invalid table, key or value\n");
@@ -289,7 +280,7 @@ int insert_into_hash_table(HashTable* table, const void* key, const void* value)
 
         if (entry == NULL) {
 		
-		HashEntry* entry1 = create_hash_entry(key,table->key_size,value, table->value_size);
+		HashEntry* entry1 = create_hash_entry(key,key_size,value,value_size);
 		if(!entry1){
 			DEBUG_HASH("Error creating hash Entry with key: ");
 			if(table->ops.print_key){
@@ -415,4 +406,62 @@ void free_iterator(HashTableIterator* iterator) {
     if(iterator) {
         free(iterator);
     }
+}
+
+size_t string_hash(const void* key){
+	const char* str = (const char*)key;
+	return murmur3_32((const uint8_t*)str, strlen(str), HASH_SEED_1);
+}
+
+int string_compare(const void* key1, const void* key2){
+	if(!key1 || !key2){
+		return -1;
+	}
+
+	const char* str1 = (const char*)key1;
+	const char* str2 = (const char*)key2;
+
+	return strcmp(str1,str2)
+}
+
+void* duplicate_value(const void* value){
+	if(!value) return NULL;
+
+	size_t* ret = malloc(sizeof(size_t));
+	if(!ret) return NULL;
+	memcpy(ret, value, sizeof(size_t));
+	return ret;
+}
+void* string_duplicate(const void* key){
+	if(!key) return NULL;
+
+	char* tmp =  strdup((const char*)key);
+	if(!tmp) return NULL;
+	return tmp;
+}
+
+void string_print(const void* key){
+	if(!key) return;
+	printf("%s",(const char*)key);
+}
+
+void int_print(const void* value){
+	if(!value) return;
+	print("%zu",(size_t*) value);
+}
+void string_free(void* key){
+	free(key);
+}
+
+void create_standard_ops(HashTable* table){
+	if(!table) return;
+
+	table->ops.hash_function = string_hash;
+	table->ops.compare_keys = string_compare;
+	table->ops.duplicate_key = string_duplicate;
+	table->ops.duplicate_value = duplicate_value;
+	table->ops.print_key = string_print;
+	table->ops.print_value = int_print;
+	table->ops.free_key = string_free;
+	table->ops.free_value = free;
 }

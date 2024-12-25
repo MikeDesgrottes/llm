@@ -82,5 +82,12 @@ bool validate_ops_func(HashTable* table);
 void reset_hash_table(HashTable* hash_table);
 size_t hash_function(const char* key, size_t capacity);
 size_t hash2(const char* key, size_t size);
+
+// String-specific operations for HashOperations
+size_t string_hash(const void* key);
+int string_compare(const void* key1, const void* key2);
+void* string_duplicate(const void* key);
+void string_free(void* key);
+void string_print(const void* key);
 #endif // HASH_TABLE_H
 

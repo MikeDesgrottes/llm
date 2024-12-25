@@ -7,6 +7,40 @@
 #include "../include/config.h"
 #include "../include/debug.h"
 
+
+/*
+ * tokenizer.c
+ *
+ * Implements tokenization for text processing and BPE (Byte Pair Encoding).
+ * Main components:
+ * - Character-level and delimiter-based tokenization
+ * - Token management (creation, deletion, merging)
+ * - Vocabulary tracking with token_map
+ * - Pair frequency counting for BPE
+ */
+
+
+
+/* Token: Represents a single token in the vocabulary
+ * - text: The actual token string
+ * - length: Length of token text
+ * - frequency: How often token appears
+ */
+
+/* Tokenizer: Main tokenizer state
+ * - vocabulary: Array of unique tokens
+ * - vocab_size: Current number of tokens
+ * - max_vocab_size: Maximum allowed tokens
+ * - pair_freqs: Tracks BPE pair frequencies
+ * - token_map: Maps tokens to vocabulary indices
+ */
+
+/* tokenize(): Converts text into tokens
+ * Modes:
+ * - Character mode: splits into individual chars (empty delimiter)
+ * - Delimiter mode: splits on specified delimiters
+ * Adds '_' separator between tokens
+ */
 #define CLEANUP() {  \
 	if (text) { \
 		for (size_t k = 0; k < step; k++) {\
@@ -42,8 +76,17 @@ Tokenizer* create_tokenizer(size_t max_vocab_size) {
     }
     tokenizer->vocab_size = 0;
     tokenizer->max_vocab_size = max_vocab_size;
-    tokenizer->pair_freqs = create_hash_table(300);
+    tokenizer->pair_freqs = create_hash_table(INITIAL_PAIR_FREQ_SIZE);
     tokenizer->token_map = create_hash_table(max_vocab_size);
+    if (!tokenizer->pair_freqs || !tokenizer->token_map) {
+    	// Clean up and return NULL
+   	if (tokenizer->pair_freqs) free_hash_table(tokenizer->pair_freqs);
+   	if (tokenizer->token_map) free_hash_table(tokenizer->token_map);
+    	free(tokenizer->vocabulary);
+    	free(tokenizer);
+    	return NULL;
+    }
+    tokenizer->token_map->allow_resize = false;
     return tokenizer;
 }
 
@@ -62,21 +105,24 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 		return;
 	}
 
-	size_t size = table->size;
-	for(size_t i = 0; i < size; i++){
-		HashEntry* entry = table->entries[i];
-
-		// sanity checks
-		if(entry == NULL){
-			continue; //skip empty slots.	
-		}
-
-		if(strcmp((const char*)entry->key,token) == 0){
-			DEBUG_VOC("Token %s already in the vocabulary. Frequency: %zu.",tokenizer->vocabulary[entry->value]->text, tokenizer->vocabulary[entry->value]->frequency);
-			tokenizer->vocabulary[entry->value]->frequency++;
-			return;
-		}
+	Iterator* it = create_iterator(table);
+	if (!it) {  // Should check if iterator creation succeeded
+    		DEBUG_VOC("Error: Could not create iterator");
+   		return;
 	}
+	while(has_next(it)) {
+    		HashEntry* entry = get_next(it);
+		if(!entry) break;
+    		if(table->ops.compare_keys(entry->key, (void*)token) == 0) {
+        		DEBUG_VOC("Token %s already in the vocabulary. Frequency: %zu.",
+            		tokenizer->vocabulary[entry->value]->text, 
+            		tokenizer->vocabulary[entry->value]->frequency);
+        		tokenizer->vocabulary[entry->value]->frequency++;
+        		free_iterator(it);
+        		return;
+    		}
+	}
+	free_iterator(it);	
 	Token* new_token = create_token(token);
     if (new_token == NULL) {
         DEBUG_MEM("Error allocating memory for new token");
@@ -91,23 +137,11 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
 		tokenizer->vocabulary[i] = NULL;
 	}
     } else if (tokenizer->vocab_size >= tokenizer->max_vocab_size) {
-	    DEBUG_VOC("Expanding the Vocabulary...");
-        // Double the size of the vocabulary if it's full
-        size_t new_max_size = tokenizer->max_vocab_size * 2;
-        Token** new_vocabulary = (Token**)realloc(tokenizer->vocabulary, sizeof(Token*) * new_max_size);
-        if (new_vocabulary == NULL) {
-            DEBUG_VOC("Error while reallocating memory for vocabulary");
-            free_token(new_token);
-            return;
-        }
-        tokenizer->vocabulary = new_vocabulary;
-	for(size_t i = tokenizer->max_vocab_size; i< new_max_size;i++){
-                tokenizer->vocabulary[i] = NULL;
-        }
-        tokenizer->max_vocab_size = new_max_size;
+	    DEBUG_VOC("Error: Vocabulary at maximum capacity");
+	    return;
     }
 
-    size_t hash_index = hash_function(token, tokenizer->max_vocab_size);
+    size_t hash_index = table->ops.hash_function((const void*)token) %tokenizer->max_vocab_size;
     //size_t index1 = hash2(token,tokenizer->max_vocab_size);
 
 
@@ -134,34 +168,53 @@ void add_to_vocabulary(Tokenizer* tokenizer, const char* token) {
     DEBUG_VOC("Error: Unable to find an empty slot in vocabulary after probing");
     free_token(new_token);
 }
-
+/*
+ * token_map is used to track occupied slots in the vocabulary array.
+ * Unlike a traditional hash table, we use sequential insertion since:
+ * 1. The map will be much smaller than vocabulary capacity
+ * 2. Sequential storage optimizes iteration performance
+ * 3. Primarily used for quick lookup of existing tokens and their indices
+ */
 int insert_into_token_map(HashTable* table, const char* key, size_t value){
 	// Sanity Check
 	if(table == NULL || key == NULL){
 		DEBUG_VOC("Error: Invalid hash table or key");
 		return -1;
 	}
-
-	HashEntry* entry =(HashEntry*) malloc(sizeof(HashEntry));
+	size_t v = value;
+	HashEntry* entry = create_hash_entry((const void*)key, sizeof(char*), (const void*)&v, sizeof(size_t));
 	if(entry == NULL){
 		DEBUG_MEM("Error: Could not allocate enough memory for hash entry");
 		return -1;
 	}
-	
-	for(size_t i = 0; i < table->size; i++){
-		HashEntry* entry1 = table->entries[i];
-		if(entry1 == NULL){
-			continue;
-		}else{
-			if(strcmp((const char*) entry1->key, key) == 0){
-				table->entries[i]->value = value;
-				return 0;
-			}
+
+	// Check to see if the key is already in the token_map. If so, update its value.
+	HashIterator* it  = create_iterator(table);
+	if(!it){
+		DEBUG_VOC("Error: Could not create a HashTableIterator.\n");
+		return -1;
+	}
+
+	while(has_next(it)){
+		HashEntry* entry1 = get_next(it);
+		if(!entry){
+			return -1;//  NULL from get_next indicate error not empty slots.
+		}
+		if(table->ops.compare_keys((const void*)entry1->key, (const void*)key) == 0){
+			table->ops.free_value(table->entries[it->current_index]->value);
+			table->entries[it->current_index]->value = table->ops.duplicate_value((const void*)&v);
+			free_iterator(it);
+			return 0;
 		}
 	}
+	free_iterator(it);	
 
 	// Ensure the table has enough capacity
     if (table->size >= table->capacity) {
+	    if(table->allow_resize == false){
+	    	free_hash_entry(entry);
+		return -1;
+	    }
         size_t new_capacity = table->capacity * 2;
         HashEntry** new_entries = realloc(table->entries, new_capacity * sizeof(HashEntry*));
         if (new_entries == NULL) {
@@ -175,14 +228,15 @@ int insert_into_token_map(HashTable* table, const char* key, size_t value){
         table->entries = new_entries;
         table->capacity = new_capacity;
     }
-	entry->key = strdup(key);
+	entry->key = table->ops.duplicate_key((const void*)key);
 	if(entry->key == NULL){
 		DEBUG_MEM("Error duplicating key %s",key);
 		free(entry);
 		return -1;
 	}
-	entry->value = value;
-	table->entries[table->size] = entry;
+	//entry->value = value;
+	entry->value = table->ops.duplicate_value((const void*)&v);
+	table->entries[table->size] = entry; // sequential insertion.
 	table->size++;
 	return 0; // success
 }
@@ -213,28 +267,37 @@ int add_token(Token** tokens, size_t* count, size_t* capacity, Token* token) {
 // Tokenize input text:wq
 //
 Token** tokenize(const TextFile* file, const char* delimiters, size_t* num_tokens) {
+	// Sanity checks
        	if (delimiters == NULL || file == NULL) { return NULL; }
        	size_t count = 0; 
-	size_t capacity = 10;
+	size_t capacity = 100;
 	size_t step = 0;
+	
 	// Initial capacity for token array 
-	Token** tokens = (Token**)calloc(capacity, sizeof(Token*)); 
+	Token** tokens = (Token**)calloc(capacity, sizeof(Token*));	
 	char** text = NULL;
         char** line = (char**)malloc(sizeof(char*));
+	if(!line) return NULL;
+
 	int res;	
 	if (tokens == NULL) { 
 		fprintf(stderr, "Error: failed to allocate memory for tokens\n"); 
 		return NULL; 
-	} 
+	}
+
+
+
 	while ((res = read_line(file,line)) == 0) { 
 		//char* line = dataset->lines[i]; 
-		if (line == NULL || strlen(line) == 0) { continue; } 
+		if (line == NULL || strlen(line) == 0) { continue; } // skip empty lines 
 		char* copy = strdup(*line); 
 		if (copy == NULL) { 
 			fprintf(stderr, "Error: Failed to duplicate line\n"); 
 			CLEANUP(); 
 			return NULL; 
-		} 
+		}
+
+
 		char* token; 
 		if (strlen(delimiters) == 0) { 
 			// Character-level tokenization 
@@ -351,14 +414,7 @@ Token** tokenize(const TextFile* file, const char* delimiters, size_t* num_token
 
 // Split a string character wise.
 
-char** split_by_character(const char* input){
-	if(strlen(input) == 0 || input == NULL){
-		return NULL;
-	}
-	size_t length = strlen(input);
-	char** text = (char**)malloc(sizeof(char*)*(length + 1));
 
-	if(!text){
 char** split_by_character(const char* input){
 	if(strlen(input) == 0 || input == NULL){
 		return NULL;
