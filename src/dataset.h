@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdbool.h>
 
 // Dataset structure
 typedef struct {
@@ -50,7 +51,7 @@ void reset_text_file(TextFile* file);
 void initialize_buffer(TextFile* file, size_t size);
 int resize_buffer(TextFile* file, size_t new_size);
 void clear_buffer(TextFile* file);
-void flush_buffer(TextFile* file)
+void flush_buffer(TextFile* file);
 //Dataset functions
 Dataset *initialize_dataset(size_t initial_capacity);
 int add_line(Dataset *dataset, const char *line);

@@ -2,6 +2,7 @@
 #define HASH_TABLE_H
 
 #include <stddef.h>
+#include <stdbool.h>
 
 // Core Operations that can be customized for different data types
 typedef struct HashOperations {
@@ -62,7 +63,7 @@ void free_iterator(HashTableIterator* iterator);
 HashEntry* create_hash_entry(const void* key, size_t key_size, const void* value, size_t value_size);
 void free_hash_entry(HashEntry* entry);
 // Creates a new hash table with the specified capacity
-HashTable* create_hash_table(size_t capacity,HashOperations ops, size_t key_size, size_t value_size);
+HashTable* create_hash_table(size_t capacity);
 
 // Frees all memory associated with the hash table
 void free_hash_table(HashTable* hash_table);

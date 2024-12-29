@@ -483,15 +483,15 @@ void free_tokenizer(Tokenizer** tokenizer) {
     *tokenizer = NULL;
 }
 
-void initialize_vocabulary(Tokenizer* tokenizer, Dataset* dataset){
-	if(tokenizer == NULL || dataset == NULL){
+void initialize_vocabulary(Tokenizer* tokenizer, const TextFile* file){
+	if(tokenizer == NULL || file == NULL){
 		return; // nothing to do here
 			// in the future create a new tokenizer if dataset exists but tokenizer is null and have the pointer points to the new address
 	}
 
 	size_t num_tokens = 0;
 
-	Token** tokens = tokenize(dataset,"",&num_tokens);
+	Token** tokens = tokenize(file,"",&num_tokens);
 	if(tokens == NULL){
 		fprintf(stderr, "Error: the dataset could not be tokenize at character level\n");
 		return;
@@ -577,13 +577,18 @@ HashEntry* find_most_freq_pairs(HashTable* hash_table){
 		fprintf(stderr, "No entry in hash table.\n");
 		return NULL;
 	}
-	for(size_t i = 0; i < hash_table->capacity;i++){
-		if(hash_table->entries[i] != NULL){
-			if(entry == NULL || hash_table->entries[i]->value > entry->value){
-				entry = hash_table->entries[i];
-			}
+
+	HashTableIterator* it = create_iterator(hash_table);
+
+	if(!it) return NULL;
+
+	while(has_next(it)){
+		HashEntry* entry1 = get_next(it);
+		if(entry == NULL || (size_t)entry1->value > (size_t)entry->value){
+			entry = entry1;
 		}
 	}
+	free_iterator(it);	
 	return entry;
 }
 
@@ -799,3 +804,11 @@ void BPE(Tokenizer* tokenizer, Dataset* dataset){
 		free(res);
 
 		if(merges % 1000 == 0) {  // Print every 1000 merges
+            		printf("Completed %zu merges, vocabulary size: %zu\n",
+                	   merges, tokenizer->vocab_size);
+        	}
+        	merges++;
+	}
+	printf("BPE complete. Final vocabulary size: %zu\n", tokenizer->vocab_size);
+	free_tokens(tokenized_data,num_tokens);
+}

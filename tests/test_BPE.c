@@ -5,6 +5,7 @@
 #include "../include/config.h"
 #include "../include/debug.h"
 #include "../src/utils.h"
+#include "../src/tokenizer.h"
 #include <assert.h>
 
 void print_vocabulary(Tokenizer* tokenizer, size_t* valid_count);
