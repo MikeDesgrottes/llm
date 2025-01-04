@@ -134,7 +134,7 @@ void increment_frequency_hash_table(HashTable* hash_table, const char* key) {
 	if ((float)hash_table->size / hash_table->capacity > 0.7) {
         resize_hash_table(hash_table);
     }
-    size_t index = hash_function(key, hash_table->capacity);
+    size_t index = hash_table->ops.hash_function((const void*)key) % hash_table->capacity;
     //size_t index1 = hash2(key,hash_table->capacity);
 
     size_t step = 0;
@@ -146,8 +146,9 @@ void increment_frequency_hash_table(HashTable* hash_table, const char* key) {
 		    fprintf(stderr, "Error: Key '%s' not found in hash table\n", key);
 	    	return; // the key is not there.
 	    }
-        if (strcmp(entry->key, key) == 0) {
-            hash_table->entries[probing_index]->value++;
+        if (hash_table->ops.compare_keys(entry->key, key) == 0) {
+            size_t* ptr = (size_t*)hash_table->entries[probing_index]->value;
+	    (*ptr)++;
             return;
         }
         step++;
@@ -155,62 +156,72 @@ void increment_frequency_hash_table(HashTable* hash_table, const char* key) {
 }
 
 void resize_hash_table(HashTable* hash_table) {
-    // Double the capacity
-    size_t new_capacity = 2 * hash_table->capacity;
 
-    // Allocate memory for the new entries array
-    HashEntry** new_entries = calloc(new_capacity, sizeof(HashEntry*));
-    if (!new_entries) {
-        fprintf(stderr, "Failed to allocate memory during hash table resizing.\n");
-        return;
-    }
+	if(!hash_table || !hash_table->allow_resize || !hash_table->entries){
+		DEBUG_HASH("Error invalid table or resize is not allowed in this table.\n");
+		return;
+	}
+    	// Double the capacity
+    	size_t new_capacity = 2 * hash_table->capacity;
 
-    size_t moved_entries = 0;
-    // Rehash all existing entries into the new table
-    for (size_t i = 0; i < hash_table->capacity; i++) {
-        
-	    if (hash_table->entries[i]) {
-            	HashEntry* entry = hash_table->entries[i];
+    	// Allocate memory for the new entries array
+    	HashEntry** new_entries = calloc(new_capacity, sizeof(HashEntry*));
+    	if (!new_entries) {
+        	fprintf(stderr, "Failed to allocate memory during hash table resizing.\n");
+        	return;
+    	}
 
-            	size_t new_index = hash_table->ops.hash_function(entry->key,entry->key_size) % new_capacity;
-	    	//size_t new_index1 = hash2(entry->key,new_capacity);
-		size_t step = 0;
+    	size_t moved_entries = 0;
+	HashTableIterator* it = create_iterator(hash_table);
+	if(!it){
+		free(new_entries);
+		return;
+	}
+    	// Rehash all existing entries into the new table
+    	while(has_next(it) == true) {
+        	HashEntry* entry = get_next(it);
+	    	if (entry != NULL) {
+            		size_t new_index = hash_table->ops.hash_function(entry->key) % new_capacity;
+	    		//size_t new_index1 = hash2(entry->key,new_capacity);
+			size_t step = 0;
             	
-		// Double hashing  to resolve collisions in the new table
-            	while (step < new_capacity) {
-    	        	size_t probing_index = (new_index + step*step) % new_capacity;
-        		if(new_entries[probing_index] == NULL){
-				new_entries[probing_index] = entry;
-				moved_entries++;
-				break;
-			}
-        		step++;
-    	     	} // Move entry to the new table
+			// Quadratic probing  to resolve collisions in the new table
+            		while (step < new_capacity) {
+    	        		size_t probing_index = (new_index + step*step) % new_capacity;
+        			if(new_entries[probing_index] == NULL){
+					new_entries[probing_index] = entry;
+					moved_entries++;
+					break;
+				}
+        			step++;
+    	     		} // Move entry to the new table
 
-	    if(step == new_capacity){
-	    	fprintf(stderr, "Failed to place entry %zu during resize\n",i);
-                // Clean up all entries we've moved so far
-                for (size_t j = 0; j < new_capacity; j++) {
-                    if (new_entries[j] != NULL) {
-                        // Don't free the entries themselves as they're still in the old table
-                        new_entries[j] = NULL;
-                    }
-                }
-                free(new_entries);
-		hash_table->size = (size_t)(hash_table->capacity * 0.75);  // Force another resize soon
-                return;
-	    }
-        }
-    }
+	    		if(step == new_capacity){
+	    			fprintf(stderr, "Failed to place entry %zu during resize\n",it->current_index);
+                		// Clean up all entries we've moved so far
+                		for (size_t j = 0; j < new_capacity; j++) {
+                    			if (new_entries[j] != NULL) {
+                        			// Don't free the entries themselves as they're still in the old table
+                        			new_entries[j] = NULL;
+                    			}
+                		}
+                		free(new_entries);
+				free_iterator(it);
+				hash_table->size = (size_t)(hash_table->capacity * 0.75);  // Force another resize soon
+                		return;
+	    		}
+        	}
+    	}	
 
-    printf("Successfully moved %zu entries to new table\n", moved_entries);
-    // Free the old entries array (entries themselves remain intact)
-    free(hash_table->entries);
+    	printf("Successfully moved %zu entries to new table\n", moved_entries);
+    	// Free the old entries array (entries themselves remain intact)
+    	free(hash_table->entries);
 
-    // Update hash table properties
-    hash_table->entries = new_entries;
-    hash_table->capacity = new_capacity;
-    hash_table->load_factor = (float) hash_table->size / hash_table->capacity ;
+    	// Update hash table properties
+    	hash_table->entries = new_entries;
+    	hash_table->capacity = new_capacity;
+    	hash_table->load_factor = (float) hash_table->size / hash_table->capacity ;
+	free_iterator(it);
 }
 
 bool validate_ops_func(HashTable* table){
@@ -222,7 +233,7 @@ bool validate_ops_func(HashTable* table){
 int get_value(HashTable* hash_table, const void* key, void* dest) {
 	if(!hash_table || !key ) return -1;
 	if(!validate_ops_func(hash_table)) return -1;
-    size_t index =hash_table->ops.hash_function(key,hash_table->key_size) % hash_table->capacity;
+    size_t index =hash_table->ops.hash_function(key) % hash_table->capacity;
     //size_t index1 = hash2(key,hash_table->capacity);
 
     size_t step = 0;
@@ -234,7 +245,7 @@ int get_value(HashTable* hash_table, const void* key, void* dest) {
 	    }
 
         if (entry->key != NULL && hash_table->ops.compare_keys(entry->key, key) == 0) {
-		memcpy(dest,entry->value, hash_table->value_size);
+		memcpy(dest,entry->value, entry->value_size);
             return 0;
         }
         step++;
@@ -250,13 +261,17 @@ int insert_into_hash_table(HashTable* table, const void* key, const void* value,
 		return -1;
 	}
 
-	if(table->key_size == 0 || table->value_size == 0){
+	if(key_size == 0 || value_size == 0){
                         fprintf(stderr, "Error: Invalid key size or value size\n");
                         return -1;
                 }
+
+	if ((float)table->size / table->capacity > 0.7 && table->allow_resize) {
+        resize_hash_table(table);
+    }
 	// Check to make sure the load factor isn't too high
 	if(table->ops.print_key){
-		DEBUG_HASH("Insert attempt - Key: "); table->ops.print_key(key); DEBUG_HASH("\n");
+		DEBUG_HASH("Insert attempt - Key: "); table->ops.print_key(key, stderr); fprintf(stderr,"\n");
 	}
     	DEBUG_HASH("Current state - Size: %zu, Capacity: %zu\n", table->size, table->capacity);
     	float load_factor = (float)table->size / table->capacity;
@@ -269,7 +284,7 @@ int insert_into_hash_table(HashTable* table, const void* key, const void* value,
         DEBUG_HASH("After resize - New capacity: %zu\n", table->capacity);
     }	
 	// Compute the initial hash index
-    size_t index = table->ops.hash_function(key,table->key_size) % table->capacity;
+    size_t index = table->ops.hash_function(key) % table->capacity;
     //size_t index1 = hash2(key,table->capacity);
     size_t step = 0;
 
@@ -284,13 +299,13 @@ int insert_into_hash_table(HashTable* table, const void* key, const void* value,
 		if(!entry1){
 			DEBUG_HASH("Error creating hash Entry with key: ");
 			if(table->ops.print_key){
-				table->ops.print_key(key);
+				table->ops.print_key(key, stderr);
 			}
 			DEBUG_HASH(" with value: ");
 			if(table->ops.print_value){
-				table->ops.print_value(value);
+				table->ops.print_value(value,stderr);
 			}
-			DEBUG_HASH("\n");
+			fprintf(stderr,"\n");
 			return -1;
 		}
             // Assign the new entry to the probing index
@@ -303,7 +318,7 @@ int insert_into_hash_table(HashTable* table, const void* key, const void* value,
             //entry->value += value;
 	    if(table->ops.free_value){
 	    	table->ops.free_value(entry->value);
-		void* tmp = malloc(table->value_size);
+		void* tmp = malloc(value_size);
 		if(!tmp){
 			DEBUG_HASH("Error while creating a value.\n");
 			return -1;
@@ -324,7 +339,7 @@ int insert_into_hash_table(HashTable* table, const void* key, const void* value,
     // If we reach here, the hash table is full
     fprintf(stderr, "Error: Hash table is full, unable to insert key: ");
     if(table->ops.print_key){
-                                table->ops.print_key(key);
+                                table->ops.print_key(key,stderr);
                         }
     fprintf(stderr,"\n Table size is %zu and its capacity is %zu\n",table->size, table->capacity);
     return -1;  // Hash table is full
@@ -383,13 +398,13 @@ HashTableIterator* create_iterator(const HashTable* table){
 bool has_next(HashTableIterator* iterator){
 
 	if(!iterator) exit(0);
-	if(iterator->items_returned >= iter->table->size) return false;
+	if(iterator->items_returned >= iterator->table->size) return false;
 
 	return true;
 }
 
 HashEntry* get_next(HashTableIterator* iterator){
-	if(!iterator || has_next() == false) return NULL;
+	if(!iterator || has_next(iterator) == false) return NULL;
 
 	for(size_t i = iterator->current_index + 1; i < iterator->table->capacity; i++){
 		HashEntry* entry = iterator->table->entries[i];
@@ -421,7 +436,7 @@ int string_compare(const void* key1, const void* key2){
 	const char* str1 = (const char*)key1;
 	const char* str2 = (const char*)key2;
 
-	return strcmp(str1,str2)
+	return strcmp(str1,str2);
 }
 
 void* duplicate_value(const void* value){
@@ -440,14 +455,14 @@ void* string_duplicate(const void* key){
 	return tmp;
 }
 
-void string_print(const void* key){
+void string_print(const void* key,FILE* stream){
 	if(!key) return;
-	printf("%s",(const char*)key);
+	fprintf(stream,"%s",(const char*)key);
 }
 
-void int_print(const void* value){
+void int_print(const void* value, FILE* stream){
 	if(!value) return;
-	print("%zu",(size_t*) value);
+	fprintf(stream,"%zu",(size_t) value);
 }
 void string_free(void* key){
 	free(key);

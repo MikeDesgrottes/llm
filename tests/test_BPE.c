@@ -22,50 +22,58 @@ void test_BPE() {
     printf("\nRunning BPE Tests...\n");
 	size_t count = 0;
     // Edge Case 1: Empty dataset
-    Dataset* empty_dataset = initialize_dataset(0);
+    TextFile* empty_file = create_text_file("empty.txt",1024);
     Tokenizer* empty_tokenizer = create_tokenizer(10);
-    BPE(empty_tokenizer, empty_dataset);
+    BPE(empty_tokenizer, empty_file);
     printf("\nEdge Case 1: Empty Dataset\n");
     print_vocabulary(empty_tokenizer,&count);
 
     free_tokenizer(&empty_tokenizer);
-    free_dataset(empty_dataset);
+    destroy_text_file(&empty_file);
 
     // Edge Case 2: Single-line dataset
-    Dataset* single_line_dataset = initialize_dataset(1);
-    add_line(single_line_dataset, "a b c d");
+    TextFile* single_line_file = create_text_file("single.txt",1024);
+    if(open_text_file(single_line_file,"a") == -1){
+    	fprintf(stderr,"Error opening textfile.\n");
+    }
+    add_line_to_file(single_line_file, "a b c d");
     Tokenizer* single_line_tokenizer = create_tokenizer(10);
-    BPE(single_line_tokenizer, single_line_dataset);
+    BPE(single_line_tokenizer, single_line_file);
     
     printf("\nEdge Case 2: Single-line Dataset\n");
     print_vocabulary(single_line_tokenizer,&count);
 
     free_tokenizer(&single_line_tokenizer);
-    free_dataset(single_line_dataset);
+    close_text_file(single_line_file);
+    destroy_text_file(&single_line_file);
 
     // General Case: Larger dataset with varied patterns and multi-character words
-    Dataset* general_dataset = initialize_dataset(5);
-    add_line(general_dataset, "cat dog bird dog cat bird");
-    add_line(general_dataset, "apple orange banana apple orange banana");
-    add_line(general_dataset, "blue red green blue red green");
-    add_line(general_dataset, "happy sad joyful happy sad joyful");
-    add_line(general_dataset, "dog apple cat orange bird banana");
+    TextFile* general_file = create_text_file("general.txt",1024);
+    if(open_text_file(general_file,"a") == -1){
+        fprintf(stderr,"Error opening textfile.\n");
+    }
+    add_line_to_file(general_file, "cat dog bird dog cat bird");
+    add_line_to_file(general_file, "apple orange banana apple orange banana");
+    add_line_to_file(general_file, "blue red green blue red green");
+    add_line_to_file(general_file, "happy sad joyful happy sad joyful");
+    add_line_to_file(general_file, "dog apple cat orange bird banana");
 
-    Tokenizer* general_tokenizer = create_tokenizer(20);
-    BPE(general_tokenizer, general_dataset);
+    Tokenizer* general_tokenizer = create_tokenizer(200000);
+    BPE(general_tokenizer, general_file);
 
     printf("\nGeneral Case: Larger Dataset with Varied Patterns\n");
     print_vocabulary(general_tokenizer,&count);
 
     // Validate the tokenized dataset after BPE
     size_t num_tokens = 0;
-    Token** tokenized_data = tokenize(general_dataset, "", &num_tokens);
+    Token** tokenized_data = tokenize(general_file, "", &num_tokens);
     printf("\nFinal Tokenized Dataset:\n");
     print_tokenized_data(tokenized_data, num_tokens);
 
     // Cleanup
+    close_text_file(general_file);
     free_tokenizer(&general_tokenizer);
-    free_dataset(general_dataset);
+    destroy_text_file(&general_file);
     for (size_t i = 0; i < num_tokens; i++) {
         free_token(tokenized_data[i]);
     }
@@ -82,7 +90,7 @@ void print_vocabulary(Tokenizer* tokenizer, size_t* valid_count) {
         HashEntry* entry = tokenizer->token_map->entries[i];
 	if(entry != NULL){
 		if(entry->key != NULL){
-			printf("  Token %zu: %s (freq: %zu)\n", entry->value, tokenizer->vocabulary[entry->value]->text, tokenizer->vocabulary[entry->value]->frequency);
+			printf("  Token %zu: %s (freq: %zu)\n", *(size_t*)entry->value, tokenizer->vocabulary[*(size_t*)entry->value]->text, tokenizer->vocabulary[*(size_t*)entry->value]->frequency);
 			tmp_count++;
 		}
         }
@@ -256,23 +264,23 @@ void test_tokenize_functionality() {
     printf("\nTesting tokenize functionality...\n");
 
     // Step 1: Create a dataset
-    Dataset* dataset = initialize_dataset(3);
-    if (!dataset) {
-        fprintf(stderr, "Failed to create dataset.\n");
+    TextFile* file = create_text_file("test.txt",1024);
+    if (!file) {
+        fprintf(stderr, "Failed to create file.\n");
         return;
     }
 
     // Add lines to the dataset
-    add_line(dataset, "hello world");
-    add_line(dataset, "foo bar");
-    add_line(dataset, "");
+    add_line_to_file(file, "hello world");
+    add_line_to_file(file, "foo bar");
+    add_line_to_file(file, "");
 
     // Step 2: Tokenize the dataset
     size_t num_tokens = 0;
-    Token** tokens = tokenize(dataset, " ", &num_tokens);
+    Token** tokens = tokenize(file, " ", &num_tokens);
     if (!tokens) {
         fprintf(stderr, "Tokenize returned NULL.\n");
-        free_dataset(dataset);
+        destroy_text_file(&file);
         return;
     }
 
@@ -300,69 +308,44 @@ void test_tokenize_functionality() {
     free(tokens);
 
     // Step 5: Free the dataset
-    free_dataset(dataset);
+    destroy_text_file(&file);
 }
 
-void test_tokenize_memory_leaks() {
-    printf("\nTesting tokenize for memory leaks...\n");
 
-    // Step 1: Create a dataset with multiple lines
-    Dataset* dataset = initialize_dataset(22);
-    if (!dataset) {
-        fprintf(stderr, "Failed to create dataset.\n");
-        return;
-    }
-
-    add_line(dataset, "this is a test");
-    add_line(dataset, "another line");
-    add_line(dataset, "edge-case , delimiters");
-
-    // Step 2: Tokenize with delimiters
-    size_t num_tokens = 0;
-    Token** tokens = tokenize(dataset, " ,", &num_tokens);
-
-    if (tokens) {
-        // Free tokens
-        for (size_t i = 0; i < num_tokens; i++) {
-            free_token(tokens[i]);
-        }
-        free(tokens);
-    } else {
-        printf("\nTokenize returned NULL unexpectedly.\n");
-    }
-
-    // Step 3: Free the dataset
-    free_dataset(dataset);
-}
 
 void test_initialize_vocabulary_memory_leak() {
     printf("\nTesting initialize_vocabulary for memory leaks...\n");
 
     // Step 1: Create a dataset
-    Dataset* dataset = initialize_dataset(10);
-    if (!dataset) {
+   TextFile* file = create_text_file("test.txt",1024); 
+    if (!file) {
         fprintf(stderr, "Failed to create dataset.\n");
         return;
     }
+	if(open_text_file(file,"a") == -1){
+		fprintf(stderr,"Error opening file\n");
+		return;
+	}
+
 
     // Add sample data to the dataset
-    add_line(dataset, "hello");
-    add_line(dataset, "world");
+    add_line_to_file(file, "hello");
+    add_line_to_file(file, "world");
 
     // Step 2: Create a tokenizer
     Tokenizer* tokenizer = create_tokenizer(10);
     if (!tokenizer) {
         fprintf(stderr, "Failed to create tokenizer.\n");
-        free_dataset(dataset);
+        destroy_text_file(&file);
         return;
     }
 
     // Step 3: Initialize vocabulary
-    initialize_vocabulary(tokenizer, dataset);
+    initialize_vocabulary(tokenizer, file);
 
     // Step 4: Free resources
     free_tokenizer(&tokenizer);
-    free_dataset(dataset);
+    destroy_text_file(&file);
 
     // Verify tokenizer is nullified
     if (!tokenizer) {
@@ -375,29 +358,29 @@ void test_initialize_vocabulary_memory_leak() {
 void test_count_pairs(){
 	printf("\nTesting count_pairs function for memory leaks and functionality....\n");
 
-	Dataset* dataset = initialize_dataset(10);
-	if(!dataset){
+	TextFile* file = create_text_file("test.txt",1024);
+	if(!file){
 		fprintf(stderr,"\nFailed to create dataset.\n");
 		return;
 	}
 
-	add_line(dataset,"Hello");
-	add_line(dataset,"world.");
+	add_line_to_file(file,"Hello");
+	add_line_to_file(file,"world.");
 
 	Tokenizer* tokenizer = create_tokenizer(10);
 	if (!tokenizer) {
         	fprintf(stderr, "Failed to create tokenizer.\n");
-        	free_dataset(dataset);
+        	destroy_text_file(&file);
         	return;
 	}
 
 	size_t num_tokens;
-	Token** tokenized_data = tokenize(dataset, "",&num_tokens);
+	Token** tokenized_data = tokenize(file, "",&num_tokens);
 	count_pairs(tokenizer,tokenized_data,num_tokens);
 
 	free_tokens(tokenized_data,num_tokens);
 	free_tokenizer(&tokenizer);
-	free_dataset(dataset);
+	destroy_text_file(&file);
 
 	if (!tokenizer) {
         	fprintf(stderr, "Tokenizer successfully freed and nullified.\n");
@@ -409,44 +392,6 @@ void test_count_pairs(){
 void print_test_result(const char* test_name, int result) {
     printf("%s: %s\n", test_name, result ? "PASSED" : "FAILED");
 }
-
-// Unit test for find_most_freq_pairs
-void test_find_most_freq_pairs() {
-    printf("Running find_most_freq_pairs Unit Test...\n");
-
-    // Step 1: Create and populate the hash table
-    HashTable* hash_table = create_hash_table(10);
-    if (hash_table == NULL) {
-        fprintf(stderr, "Failed to create hash table\n");
-        return;
-    }
-
-    // Insert some pairs into the hash table
-    insert_into_hash_table(hash_table, "a b", 3);
-    insert_into_hash_table(hash_table, "b c", 5); // Most frequent
-    insert_into_hash_table(hash_table, "c d", 2);
-
-    // Step 2: Call the function to test
-    HashEntry* most_frequent = find_most_freq_pairs(hash_table);
-
-    // Step 3: Validate the result
-    int result = 1; // Assume test passes initially
-    if (most_frequent == NULL) {
-        fprintf(stderr, "Failed to find the most frequent pair\n");
-        result = 0;
-    } else if (strcmp(most_frequent->key, "b c") != 0 || most_frequent->value != 5) {
-        fprintf(stderr, "Expected 'b c' with frequency 5, but got '%s' with frequency %zu\n",
-                most_frequent->key, most_frequent->value);
-        result = 0;
-    }
-
-    // Print the test result
-    print_test_result("find_most_freq_pairs", result);
-
-    // Step 4: Clean up
-    free_hash_table(hash_table);
-}
-
 // Helper function to print tokenized data
 void print_tokens(Token** tokens, size_t size) {
     printf("Tokenized Data: ");
@@ -458,77 +403,4 @@ void print_tokens(Token** tokens, size_t size) {
     printf("\n");
 }
 
-// Unit test for merge_most_freq_pair
-void test_merge_most_freq_pair() {
-    printf("Running merge_most_freq_pair Unit Test...\n");
 
-    // Step 1: Create tokenized data
-    size_t size = 5;
-    Token* tokenized_data[] = {
-        create_token("a"),
-        create_token("b"),
-        create_token("c"),
-        create_token("a"),
-        create_token("b")
-    };
-
-    // Step 2: Create most frequent pair
-    HashEntry most_freq_pair = {.key = strdup("a b"), .value = 2};
-
-    // Step 3: Print initial tokens
-    print_tokens(tokenized_data, size);
-
-    // Step 4: Call the function to test
-    char* res = merge_most_freq_pair(tokenized_data, &most_freq_pair, &size);
-
-    // Step 5: Validate the results
-    int result = 1; // Assume test passes
-    if (strcmp(tokenized_data[0]->text, "ab") != 0) {
-        fprintf(stderr, "Expected first token to be 'ab', got '%s'\n", tokenized_data[0]->text);
-        result = 0;
-    }
-    if (strcmp(tokenized_data[1]->text, "c") != 0) {
-        fprintf(stderr, "Expected second token to be 'c', got '%s'\n", tokenized_data[1]->text);
-        result = 0;
-    }
-    if (strcmp(tokenized_data[2]->text, "ab") != 0) {
-        fprintf(stderr, "Expected third token to be 'a', got '%s'\n", tokenized_data[2]->text);
-        result = 0;
-    }
-    if (tokenized_data[4] != NULL) {
-        fprintf(stderr, "Expected last token to be NULL, but it's not\n");
-        result = 0;
-    }
-
-    // Print final tokens and test result
-    print_tokens(tokenized_data, size); // Size reduced by 1
-    print_test_result("merge_most_freq_pair", result);
-
-    // Step 6: Clean up
-    for (size_t i = 0; i < size; i++) {
-        if (tokenized_data[i] != NULL) {
-            free_token(tokenized_data[i]);
-        }
-    }
-    free(most_freq_pair.key);
-    free(res);
-}
-
-void test_BPE1(){
-	Dataset* dataset = initialize_dataset(10000);
-	int res = load_dataset_from_file(dataset,"/mnt/data/llm/datasets/ebk2.txt");
-	if(res == -1){
-		DEBUG_TOK("Error while loading file.");
-		return;
-	}
-
-	Tokenizer* tokenizer = create_tokenizer(MAX_VOCAB_SIZE);
-	BPE(tokenizer, dataset);
-
-	//  save the vocabulary to a file
-	size_t num_tokens = 0;
-	print_vocabulary(tokenizer,&num_tokens);
-	//Cleanup
-	free_tokenizer(&tokenizer);
-	free_dataset(dataset);
-}

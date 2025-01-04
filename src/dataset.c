@@ -7,6 +7,7 @@
 #include <sys/stat.h>
 #include <unistd.h>
 #include <time.h>
+#include <dirent.h>
 
 //File Creation and Management
 //
@@ -16,10 +17,10 @@ char* get_file_name(const char* filepath){
 		fprintf(stderr,"Error: Empty filepath.\n");
 		return NULL;
 	}
-	char* ptr = strrchr(filepath,"/");
+	char* ptr = strrchr(filepath,'/');
 	if(ptr){
 		ptr++;
-		if(ptr != '\0'){ 
+		if(*ptr != '\0'){ 
 			return strdup(ptr);
 		}else{
 			fprintf(stderr,"Error: Filepath %s is actually a directory.\n", filepath);
@@ -73,7 +74,7 @@ TextFile* create_text_file(const char* filepath, size_t initial_buffer_size){
 	file->buffer = NULL;
 	file->buffer_size = initial_buffer_size;
 	file->is_open = false;
-
+	file->metadata.category = NULL;
 	struct stat file_info;
 	if(stat(file->filepath,&file_info) == 0){
 		file->metadata.size = file_info.st_size;
@@ -86,9 +87,17 @@ TextFile* create_text_file(const char* filepath, size_t initial_buffer_size){
     			return NULL;
 		}
 	}else{
-		free(file->filepath);
-		free(file);
-		return NULL;
+		// Create empty file if it doesn't exist
+    FILE* tmp = fopen(file->filepath, "a");
+    if(tmp) {
+        fclose(tmp);
+    }
+    file->metadata.filename = NULL;
+file->metadata.size = 0;
+file->metadata.last_modified = 0;
+file->metadata.category = NULL;
+		update_metadata(file);
+		return file;
 	}
 	return file;
 }
@@ -98,6 +107,9 @@ int open_text_file(TextFile* file, const char* mode){
 		fprintf(stderr,"Error: Invalid arguments to open text file.\n");
 		return -1; // failure
 	}else if(file->is_open == true){
+		close_text_file(file);
+		FILE* tmp = fopen(file->filepath,mode);
+		file->file_handle = tmp;
 		return 0;
 	}else if(validate_mode_pattern(mode) == false){
 		fprintf(stderr,"Error: Invalid file mode.\n");
@@ -263,55 +275,25 @@ int read_next_chunk(TextFile* file, size_t chunk_size){
 	return bytes_read;
 }
 
-int read_line(TextFile* file, char** line){
-// Input validation
-    if (!file || !file->is_open || !file->file_handle || !line) {
-        return -1;
-    }
-
-    // Initialize or clear the line buffer
-    size_t buffer_size = 256;  // Initial size, can grow
-    *line = malloc(buffer_size);
-    if (!*line) {
-        return -1;
-    }
-
-    // Read character by character
-    size_t pos = 0;
-    int c;
-    while ((c = fgetc(file->file_handle)) != EOF) {
-        if (pos + 1 >= buffer_size) {
-            // Need more space
-            buffer_size *= 2;
-            char* temp = realloc(*line, buffer_size);
-            if (!temp) {
-                free(*line);
-                *line = NULL;
-                return -1;
-            }
-            *line = temp;
-        }
-        
-        (*line)[pos++] = c;
-        if (c == '\n') {
-            break;
-        }
-    }
-
-    if (pos == 0 && c == EOF) {
-        free(*line);
+int read_line(const TextFile* file, char** line){
+	char* buffer = malloc(1024);  // Initial allocation
+    if (!buffer) return -1;
+    
+    if (fgets(buffer, 1024, file->file_handle) != NULL) {
+        *line = buffer;  // Give the buffer to the caller
+        return 0;
+    } else {
+        free(buffer);  // Clean up if we failed
         *line = NULL;
-        return -2;  // EOF reached
+        return -1;
     }
 
-    (*line)[pos] = '\0';
-    return 0;  // Success	
 }
 
 
 // Metadata Operations:
 
-void update_metadata(TextFile* file){
+int update_metadata(TextFile* file){
 // Input validation
     if (!file || !file->filepath) {
         return -1;
@@ -336,8 +318,8 @@ void update_metadata(TextFile* file){
         fprintf(stderr, "Error: Could not extract filename from %s\n", file->filepath);
         return -1;
     }
-
-    return 0;  // Success	
+    
+    return 0;// Success	
 }
 
 int get_file_size(TextFile* file, size_t* size) {
@@ -485,8 +467,13 @@ int load_dataset_from_directory(Dataset* dataset, const char* directory_path) {
             
             // Build path to category directory
             char category_path[PATH_MAX];
-            snprintf(category_path, PATH_MAX, "%s/%s", 
+            int dir_len = snprintf(category_path, PATH_MAX, "%s/%s", 
                     directory_path, entry->d_name);
+
+	    if (dir_len < 0 || dir_len >= PATH_MAX) {
+		    fprintf(stderr, "Path too long: %s/%s\n", directory_path, entry->d_name);
+		    continue;
+	    }
             
             // Get the newly added category
             Category* category = dataset->categories[dataset->num_categories - 1];
@@ -498,8 +485,12 @@ int load_dataset_from_directory(Dataset* dataset, const char* directory_path) {
                 while ((file_entry = readdir(cat_dir)) != NULL) {
                     if (file_entry->d_type == DT_REG) {
                         char file_path[PATH_MAX];
-                        snprintf(file_path, PATH_MAX, "%s/%s", 
+                        int path_len = snprintf(file_path, PATH_MAX, "%s/%s", 
                                 category_path, file_entry->d_name);
+			if (path_len < 0 || path_len >= PATH_MAX) {
+				fprintf(stderr, "Path too long: %s/%s\n", category_path, file_entry->d_name);
+    				continue;
+			}
                         add_file_to_category(category, file_path);
                     }
                 }
@@ -528,4 +519,22 @@ void free_dataset(Dataset* dataset) {
     free(dataset->categories);
     free(dataset);
 }
-
+int add_line_to_file(TextFile* file, const char* line) {
+    // 1. Parameter validatio
+    // 2. Check append mode
+	if(!file || !line || !file->is_open) {
+        return -1;  // Basic error checking
+    }
+    
+    fprintf(file->file_handle, "%s", line);
+    if(line[strlen(line)-1] != '\n') {
+        fprintf(file->file_handle, "\n");
+    }
+    
+    return 0;
+    // 3. Check/prepare buffer
+    // 4. Handle newline
+    // 5. Write to buffer
+    // 6. Immediate flush
+    // 7. Return status
+}

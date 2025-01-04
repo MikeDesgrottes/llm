@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-
+#include <dirent.h> 
 // Dataset structure
 typedef struct {
     char* filename;            // Name of the file
@@ -18,6 +18,7 @@ typedef struct {
     FILE* file_handle;          // The actual connection to the file on disk
     char* filepath;             // Full path to the file
     char* buffer;               // For buffered reading if needed
+    size_t num_lines;
     size_t buffer_size;
     bool is_open;              // Track if file is currently open
     FileMetadata metadata;      // Information about the file
@@ -42,16 +43,16 @@ typedef struct {
 TextFile* create_text_file(const char* filenamei, size_t initial_buffer_size);
 int open_text_file(TextFile* file, const char* mode);
 void close_text_file(TextFile* file);
-void destroy_text_file(TextFile* file);
+void destroy_text_file(TextFile** file);
 void reset_text_file(TextFile* file);
-
+int add_line_to_file(TextFile* file, const char* line);
 //Buffer Management:
 //
 //
 void initialize_buffer(TextFile* file, size_t size);
 int resize_buffer(TextFile* file, size_t new_size);
 void clear_buffer(TextFile* file);
-void flush_buffer(TextFile* file);
+int flush_buffer(TextFile* file);
 //Dataset functions
 Dataset *initialize_dataset(size_t initial_capacity);
 int add_line(Dataset *dataset, const char *line);
@@ -66,11 +67,11 @@ size_t* search_data_all(Dataset* dataset, char* target, int (*cmp_func)(char*, c
 
 int get_modification_time(TextFile* file, time_t* time);
 int get_file_size(TextFile* file, size_t* size);
-void update_metadata(TextFile* file);
+int update_metadata(TextFile* file);
 int load_dataset_from_directory(Dataset* dataset, const char* directory_path);
 int add_category_to_dataset(Dataset* dataset, const char* category_name);
 Dataset* create_dataset(size_t initial_capacity);
-
+int read_line(const TextFile* file, char** line);
 // Category Management.
 //
 int add_file_to_category(Category* category, const char* filepath);

@@ -1,13 +1,14 @@
 #ifndef HASH_TABLE_H
 #define HASH_TABLE_H
 
+#include <stdio.h>
 #include <stddef.h>
 #include <stdbool.h>
 
 // Core Operations that can be customized for different data types
 typedef struct HashOperations {
     // Creates a hash value from a key
-    size_t (*hash_function)(const void* key, size_t key_size);
+    size_t (*hash_function)(const void* key);
     
     // Compares two keys for equality
     int (*compare_keys)(const void* key1, const void* key2);
@@ -21,8 +22,8 @@ typedef struct HashOperations {
     void (*free_value)(void* value);
     
     // For debugging and visualization
-    void (*print_key)(const void* key);
-    void (*print_value)(const void* value);
+    void (*print_key)(const void* key, FILE* stream);
+    void (*print_value)(const void* value,FILE* stream);
 } HashOperations;
 
 // Each entry in our hash table
@@ -76,8 +77,7 @@ int get_value(HashTable* hash_table, const void* key, void* dest);
 
 void resize_hash_table(HashTable* hash_table);
 
-int insert_into_hash_table(HashTable* table, const void* key, const void* value);
-
+int insert_into_hash_table(HashTable* table, const void* key, const void* value, size_t key_size, size_t value_size);
 bool validate_ops_func(HashTable* table);
 
 void reset_hash_table(HashTable* hash_table);
@@ -89,6 +89,9 @@ size_t string_hash(const void* key);
 int string_compare(const void* key1, const void* key2);
 void* string_duplicate(const void* key);
 void string_free(void* key);
-void string_print(const void* key);
+void string_print(const void* key, FILE* stream);
+void int_print(const void* value,FILE* stream);
+void create_standard_ops(HashTable* table);
+
 #endif // HASH_TABLE_H
 

@@ -23,21 +23,22 @@ typedef struct {
 // Function declarations
 Tokenizer* create_tokenizer(size_t max_vocab_size);
 void add_to_vocabulary(Tokenizer* tokenizer, const char* token);
-Token** tokenize(const Dataset* dataset, const char* delimiters, size_t* num_tokens);
+Token** tokenize( TextFile* file, const char* delimiters, size_t* num_tokens);
 void free_tokenizer(Tokenizer** tokenizer);
 char** split_by_character(const char* input);
 void free_tokens(Token** tokens, size_t num_tokens);
 char*** tokenize_dataset_to_characters(const char** dataset, size_t num_lines, const char* delimiter);
-void initialize_vocabulary(Tokenizer* tokenizer, Dataset* dataset);
+void initialize_vocabulary(Tokenizer* tokenizer, TextFile* file);
 void initialize_freq(Tokenizer* tokenizer, size_t rows, size_t columns);
 void count_pairs(Tokenizer* tokenizer, Token** tokens, size_t num_tokens);
 HashEntry* find_most_freq_pairs(HashTable* hash_table);
 char* create_pair_key(const char* token1, const char* token2);
-void BPE(Tokenizer* tokenizer, Dataset* dataset);
+void BPE(Tokenizer* tokenizer, TextFile* dataset);
 char*  merge_most_freq_pair(Token** tokenized_data, HashEntry* most_freq_pair, size_t* size);
 int insert_into_token_map(HashTable* table, const char* key, size_t value);
 Token** resize_tokens(Token** tokens, size_t* capacity);
 int add_token(Token** tokens, size_t* count, size_t* capacity, Token* token);
+bool validate_pairs(const char* current, const char* next);
 
 // Funcrtion associated with the token struct.
 

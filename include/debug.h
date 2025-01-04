@@ -22,7 +22,7 @@
 #define DEBUG_PRINT(category, fmt, ...) \
     do { \
         if (DEBUG_LEVEL & category) { \
-            fprintf(stderr, "[%s:%d] " fmt "\n", \
+            fprintf(stderr, "[%s:%d] " fmt "", \
                 __FILE__, __LINE__, ##__VA_ARGS__); \
         } \
     } while (0)

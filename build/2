@@ -1,0 +1,30 @@
+Running Free Tokenizer Memory Tests....
+
+Running BPE Tests...
+
+Edge Case 1: Empty Dataset
+Vocabulary (size: 0, max size: 10):
+Initial tokens: 9
+Completed 0 merges, vocabulary size: 2
+BPE complete. Final vocabulary size: 2
+
+Edge Case 2: Single-line Dataset
+Vocabulary (size: 2, max size: 10):
+  Token 5: a (freq: 1)
+Initial tokens: 168
+Completed 0 merges, vocabulary size: 2
+BPE complete. Final vocabulary size: 20
+
+General Case: Larger Dataset with Varied Patterns
+Vocabulary (size: 20, max size: 20):
+  Token 4: c (freq: 1)
+
+Final Tokenized Dataset:
+c a t _ d o g _ b i r d _ d o g _ c a t _ b i r d 
+ _ a p p l e _ o r a n g e _ b a n a n a _ a p p l e _ o r a n g e _ b a n a n a 
+ _ b l u e _ r e d _ g r e e n _ b l u e _ r e d _ g r e e n 
+ _ h a p p y _ s a d _ j o y f u l _ h a p p y _ s a d _ j o y f u l 
+ _ d o g _ a p p l e _ c a t _ o r a n g e _ b i r d _ b a n a n a 
+ _ 
+BPE Tests Completed.
+All tests completed.

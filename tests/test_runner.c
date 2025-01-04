@@ -13,11 +13,11 @@ void test_create_tokenizer_memory_leak();
 void test_combined_memory_leak();
 
 int main() {
-    //printf("Running Dataset Tests...\n");
-    //run_dataset_tests();
+    printf("Running Dataset Tests...\n");
+    run_dataset_tests();
 
-    //printf("Running Hash Table Tests...\n");
-    //run_hash_table_tests();
+    printf("Running Hash Table Tests...\n");
+    run_hash_table_tests();
 
     printf("Running Free Tokenizer Memory Tests....\n");
     //test_memory_leak();

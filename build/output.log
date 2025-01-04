@@ -1,0 +1,218 @@
+==925606== Memcheck, a memory error detector
+==925606== Copyright (C) 2002-2022, and GNU GPL'd, by Julian Seward et al.
+==925606== Using Valgrind-3.19.0 and LibVEX; rerun with -h for copyright info
+==925606== Command: ./test_runner
+==925606== Parent PID: 923874
+==925606== 
+==925606== Invalid read of size 1
+==925606==    at 0x484B748: strcmp (vg_replace_strmem.c:924)
+==925606==    by 0x408602: string_compare (hash_table.c:435)
+==925606==    by 0x407C91: get_value (hash_table.c:247)
+==925606==    by 0x404CBA: count_pairs (tokenizer.c:591)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4dd6643 is 0 bytes after a block of size 3 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Invalid read of size 1
+==925606==    at 0x484B748: strcmp (vg_replace_strmem.c:924)
+==925606==    by 0x408602: string_compare (hash_table.c:435)
+==925606==    by 0x40778A: increment_frequency_hash_table (hash_table.c:149)
+==925606==    by 0x404D04: count_pairs (tokenizer.c:595)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4dd6643 is 0 bytes after a block of size 3 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Invalid read of size 1
+==925606==    at 0x484A604: strlen (vg_replace_strmem.c:494)
+==925606==    by 0x48E1297: __vfprintf_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x48E1A5E: buffered_vfprintf (in /usr/lib64/libc.so.6)
+==925606==    by 0x48CC439: fprintf (in /usr/lib64/libc.so.6)
+==925606==    by 0x405A0F: BPE (tokenizer.c:855)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4dd9d83 is 0 bytes after a block of size 3 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Invalid read of size 1
+==925606==    at 0x484A604: strlen (vg_replace_strmem.c:494)
+==925606==    by 0x490ED72: strdup (in /usr/lib64/libc.so.6)
+==925606==    by 0x4052BB: merge_most_freq_pair (tokenizer.c:727)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4dd9d83 is 0 bytes after a block of size 3 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Invalid read of size 2
+==925606==    at 0x4850DB0: memmove (vg_replace_strmem.c:1382)
+==925606==    by 0x4052BB: merge_most_freq_pair (tokenizer.c:727)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4dd9d82 is 2 bytes inside a block of size 3 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Invalid read of size 1
+==925606==    at 0x4850BD0: memmove (vg_replace_strmem.c:1382)
+==925606==    by 0x4052BB: merge_most_freq_pair (tokenizer.c:727)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4de09f4 is 0 bytes after a block of size 4 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Invalid read of size 2
+==925606==    at 0x4850DBF: memmove (vg_replace_strmem.c:1382)
+==925606==    by 0x4052BB: merge_most_freq_pair (tokenizer.c:727)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606==  Address 0x4de7414 is 4 bytes inside a block of size 5 alloc'd
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x407397: create_hash_entry (hash_table.c:67)
+==925606==    by 0x407FC5: insert_into_hash_table (hash_table.c:294)
+==925606==    by 0x404D65: count_pairs (tokenizer.c:599)
+==925606==    by 0x4059B5: BPE (tokenizer.c:850)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x4853103: strcspn (vg_replace_strmem.c:1871)
+==925606==    by 0x490FB81: strtok_r (in /usr/lib64/libc.so.6)
+==925606==    by 0x40531A: merge_most_freq_pair (tokenizer.c:734)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x490FB89: strtok_r (in /usr/lib64/libc.so.6)
+==925606==    by 0x40531A: merge_most_freq_pair (tokenizer.c:734)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x484A608: strlen (vg_replace_strmem.c:494)
+==925606==    by 0x404FE2: create_token (tokenizer.c:668)
+==925606==    by 0x405322: merge_most_freq_pair (tokenizer.c:734)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x484A608: strlen (vg_replace_strmem.c:494)
+==925606==    by 0x490ED72: strdup (in /usr/lib64/libc.so.6)
+==925606==    by 0x404FF6: create_token (tokenizer.c:669)
+==925606==    by 0x405322: merge_most_freq_pair (tokenizer.c:734)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x484A608: strlen (vg_replace_strmem.c:494)
+==925606==    by 0x48E1297: __vfprintf_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x48E1A5E: buffered_vfprintf (in /usr/lib64/libc.so.6)
+==925606==    by 0x48CC439: fprintf (in /usr/lib64/libc.so.6)
+==925606==    by 0x40507D: create_token (tokenizer.c:676)
+==925606==    by 0x405322: merge_most_freq_pair (tokenizer.c:734)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x484A608: strlen (vg_replace_strmem.c:494)
+==925606==    by 0x48E1297: __vfprintf_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x48EB223: __vsprintf_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x48CC697: sprintf (in /usr/lib64/libc.so.6)
+==925606==    by 0x405231: merge_tokens (tokenizer.c:715)
+==925606==    by 0x4053A1: merge_most_freq_pair (tokenizer.c:743)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== Conditional jump or move depends on uninitialised value(s)
+==925606==    at 0x40548D: merge_most_freq_pair (tokenizer.c:755)
+==925606==    by 0x405A26: BPE (tokenizer.c:856)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== 
+==925606== HEAP SUMMARY:
+==925606==     in use at exit: 1,416 bytes in 3 blocks
+==925606==   total heap usage: 11,751 allocs, 11,748 frees, 3,494,703 bytes allocated
+==925606== 
+==925606== 472 bytes in 1 blocks are still reachable in loss record 1 of 3
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x48E904E: __fopen_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x40619C: open_text_file (dataset.c:111)
+==925606==    by 0x4034E3: tokenize (tokenizer.c:310)
+==925606==    by 0x4058AC: BPE (tokenizer.c:832)
+==925606==    by 0x4014BC: test_BPE (test_BPE.c:41)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== 472 bytes in 1 blocks are still reachable in loss record 2 of 3
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x48E904E: __fopen_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x40619C: open_text_file (dataset.c:111)
+==925606==    by 0x4034E3: tokenize (tokenizer.c:310)
+==925606==    by 0x4058AC: BPE (tokenizer.c:832)
+==925606==    by 0x4015BA: test_BPE (test_BPE.c:62)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== 472 bytes in 1 blocks are still reachable in loss record 3 of 3
+==925606==    at 0x484486F: malloc (vg_replace_malloc.c:381)
+==925606==    by 0x48E904E: __fopen_internal (in /usr/lib64/libc.so.6)
+==925606==    by 0x40619C: open_text_file (dataset.c:111)
+==925606==    by 0x4034E3: tokenize (tokenizer.c:310)
+==925606==    by 0x4015F4: test_BPE (test_BPE.c:69)
+==925606==    by 0x4028B3: main (test_runner.c:34)
+==925606== 
+==925606== LEAK SUMMARY:
+==925606==    definitely lost: 0 bytes in 0 blocks
+==925606==    indirectly lost: 0 bytes in 0 blocks
+==925606==      possibly lost: 0 bytes in 0 blocks
+==925606==    still reachable: 1,416 bytes in 3 blocks
+==925606==         suppressed: 0 bytes in 0 blocks
+==925606== 
+==925606== For lists of detected and suppressed errors, rerun with: -s
+==925606== ERROR SUMMARY: 7907 errors from 14 contexts (suppressed: 0 from 0)

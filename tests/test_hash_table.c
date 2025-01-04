@@ -16,7 +16,10 @@ void test_create_hash_table() {
 
 void test_increment_frequency() {
     HashTable* hash_table = create_hash_table(10);
-    increment_frequency_hash_table(hash_table, "key1");
+    const char* key = "key1";
+    size_t value = 10;
+    insert_into_hash_table(hash_table, (const void*)key,(const void*)&value, strlen(key) + 1,sizeof(size_t));
+    insert_into_hash_table(hash_table,(const void*)key,(const void*)&value,strlen(key) + 1,sizeof(size_t) );
     free_hash_table(hash_table);
 }
 
@@ -54,8 +57,8 @@ void test_free_hash_table_memory_leak() {
         return;
     }
 
-    insert_into_hash_table(table, (const char*) key1, value1);
-    insert_into_hash_table(table, (const char*)key2, value2);
+    insert_into_hash_table(table, (const void*) key1, (const void*)&value1,sizeof(char*), sizeof(size_t));
+    insert_into_hash_table(table, (const void*)key2, (const void*)&value2,sizeof(char*),sizeof(size_t));
     free(key1);
     free(key2);
     fprintf(stderr, "Inserted entries into hash table.\n");
