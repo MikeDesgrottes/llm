@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "../src/hash_table.h"
+#include <hash_table.h>
 
 void test_free_hash_table_memory_leak();
 
@@ -57,8 +57,8 @@ void test_free_hash_table_memory_leak() {
         return;
     }
 
-    insert_into_hash_table(table, (const void*) key1, (const void*)&value1,sizeof(char*), sizeof(size_t));
-    insert_into_hash_table(table, (const void*)key2, (const void*)&value2,sizeof(char*),sizeof(size_t));
+    insert_into_hash_table(table, (const void*) key1, (const void*)&value1,strlen(key1) + 1, sizeof(size_t));
+    insert_into_hash_table(table, (const void*)key2, (const void*)&value2,strlen(key2) + 1,sizeof(size_t));
     free(key1);
     free(key2);
     fprintf(stderr, "Inserted entries into hash table.\n");

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "utils.h"
+#include <utils.h>
 
 // Load vocabulary from a file
 char** load_dataset(const char* file_path, size_t* lines) {

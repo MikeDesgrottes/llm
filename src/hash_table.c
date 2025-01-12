@@ -3,7 +3,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdint.h>
-#include "../include/debug.h"
+#include <debug.h>
 
 #define HASH_SEED_1 0xc70f6907    // For primary hash
 #define HASH_SEED_2 0x8e055be3    // For secondary hash

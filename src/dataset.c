@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "dataset.h"
+#include <dataset.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <unistd.h>
@@ -280,6 +280,10 @@ int read_line(const TextFile* file, char** line){
     if (!buffer) return -1;
     
     if (fgets(buffer, 1024, file->file_handle) != NULL) {
+	    size_t len = strlen(buffer);
+        if (len > 0 && buffer[len-1] == '\n') {
+            buffer[len-1] = '\0';
+        }
         *line = buffer;  // Give the buffer to the caller
         return 0;
     } else {
@@ -527,7 +531,7 @@ int add_line_to_file(TextFile* file, const char* line) {
     }
     
     fprintf(file->file_handle, "%s", line);
-    if(line[strlen(line)-1] != '\n') {
+    if(strlen(line) > 0 && line[strlen(line)-1] != '\n') {
         fprintf(file->file_handle, "\n");
     }
     

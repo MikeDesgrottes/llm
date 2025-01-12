@@ -1,5 +1,5 @@
 #include <assert.h>
-#include "../src/dataset.h"
+#include <dataset.h>
 
 void test_create_dataset() {
     Dataset* dataset = create_dataset(10);

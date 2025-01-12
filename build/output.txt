@@ -1,0 +1,269 @@
+[src/hash_table.c:274] Insert attempt - Key: key1
+[src/hash_table.c:276] Current state - Size: 0, Capacity: 10
+[src/hash_table.c:278] Load factor: 0.000000
+[src/hash_table.c:274] Insert attempt - Key: key1
+[src/hash_table.c:276] Current state - Size: 1, Capacity: 10
+[src/hash_table.c:278] Load factor: 0.100000
+
+Testing free_hash_table memory management...
+Hash table created: 0x608000000120
+[src/hash_table.c:274] Insert attempt - Key: key1
+[src/hash_table.c:276] Current state - Size: 0, Capacity: 10
+[src/hash_table.c:278] Load factor: 0.000000
+[src/hash_table.c:274] Insert attempt - Key: key2
+[src/hash_table.c:276] Current state - Size: 1, Capacity: 10
+[src/hash_table.c:278] Load factor: 0.100000
+Inserted entries into hash table.
+Hash table successfully freed.
+[src/tokenizer.c:71] Allocating tokenizer structure at 0x604000000150
+[src/tokenizer.c:73] Allocating vocabulary with initial size 10 
+[src/tokenizer.c:92] 
+Error: Could not tokenize dataset or zero token
+[src/tokenizer.c:515] Freeing the Vocabulary itself 0x607000000410
+[src/tokenizer.c:71] Allocating tokenizer structure at 0x604000000190
+[src/tokenizer.c:73] Allocating vocabulary with initial size 10 
+[src/tokenizer.c:92] 
+[src/tokenizer.c:677] Token created: 0x6030000000d0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000100, text: 
+Error while reading line in the textfile.
+[src/tokenizer.c:840] 
+Initial tokens: 2
+[src/tokenizer.c:843] Initializing Vocabulary...[src/tokenizer.c:677] Token created: 0x603000000130, text: a
+[src/tokenizer.c:677] Token created: 0x603000000160, text: 
+Error while reading line in the textfile.
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:677] Token created: 0x6030000001c0, text: a
+[src/tokenizer.c:140] New Token created Text: a Frequency: 1.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000130
+[src/tokenizer.c:691] Token freed: 0x603000000130 
+[src/tokenizer.c:541] Adding token  to vocabulary.[src/tokenizer.c:677] Token created: 0x603000000250, text: 
+[src/tokenizer.c:140] New Token created Text:  Frequency: 1.
+[src/tokenizer.c:545] Token  added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000160
+[src/tokenizer.c:691] Token freed: 0x603000000160 
+[src/tokenizer.c:847] Vocabulary initialized.[src/tokenizer.c:850] Counting pairs...
+No entry in hash table.
+[src/tokenizer.c:687] Token text freed: 0x6030000000d0
+[src/tokenizer.c:691] Token freed: 0x6030000000d0 
+[src/tokenizer.c:687] Token text freed: 0x603000000100
+[src/tokenizer.c:691] Token freed: 0x603000000100 
+[src/tokenizer.c:506] Freeing the vocabulary at 0 
+[src/tokenizer.c:687] Token text freed: 0x603000000250
+[src/tokenizer.c:691] Token freed: 0x603000000250 
+[src/tokenizer.c:506] Freeing the vocabulary at 5 
+[src/tokenizer.c:687] Token text freed: 0x6030000001c0
+[src/tokenizer.c:691] Token freed: 0x6030000001c0 
+[src/tokenizer.c:515] Freeing the Vocabulary itself 0x607000000560
+[src/tokenizer.c:71] Allocating tokenizer structure at 0x604000000250
+[src/tokenizer.c:73] Allocating vocabulary with initial size 100 
+[src/tokenizer.c:92] 
+[src/tokenizer.c:677] Token created: 0x6030000002e0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000310, text: a
+[src/tokenizer.c:677] Token created: 0x603000000340, text: 
+[src/tokenizer.c:677] Token created: 0x6030000003a0, text: a
+[src/tokenizer.c:677] Token created: 0x6030000003d0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000400, text: 
+[src/tokenizer.c:677] Token created: 0x603000000460, text: a
+[src/tokenizer.c:677] Token created: 0x603000000490, text: a
+[src/tokenizer.c:677] Token created: 0x6030000004c0, text: 
+[src/tokenizer.c:677] Token created: 0x603000000520, text: a
+[src/tokenizer.c:677] Token created: 0x603000000550, text: a
+[src/tokenizer.c:677] Token created: 0x603000000580, text: 
+[src/tokenizer.c:677] Token created: 0x6030000005e0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000610, text: a
+[src/tokenizer.c:677] Token created: 0x603000000640, text: 
+Error while reading line in the textfile.
+[src/tokenizer.c:840] 
+Initial tokens: 15
+[src/tokenizer.c:843] Initializing Vocabulary...[src/tokenizer.c:677] Token created: 0x6030000006a0, text: a
+[src/tokenizer.c:677] Token created: 0x6030000006d0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000700, text: 
+[src/tokenizer.c:677] Token created: 0x603000000760, text: a
+[src/tokenizer.c:677] Token created: 0x603000000790, text: a
+[src/tokenizer.c:677] Token created: 0x6030000007c0, text: 
+[src/tokenizer.c:677] Token created: 0x603000000820, text: a
+[src/tokenizer.c:677] Token created: 0x603000000850, text: a
+[src/tokenizer.c:677] Token created: 0x603000000880, text: 
+[src/tokenizer.c:677] Token created: 0x6030000008e0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000910, text: a
+[src/tokenizer.c:677] Token created: 0x603000000940, text: 
+[src/tokenizer.c:677] Token created: 0x6030000009a0, text: a
+[src/tokenizer.c:677] Token created: 0x6030000009d0, text: a
+[src/tokenizer.c:677] Token created: 0x603000000a00, text: 
+Error while reading line in the textfile.
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:677] Token created: 0x603000000a60, text: a
+[src/tokenizer.c:140] New Token created Text: a Frequency: 1.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x6030000006a0
+[src/tokenizer.c:691] Token freed: 0x6030000006a0 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:677] Token created: 0x603000000af0, text: a
+[src/tokenizer.c:140] New Token created Text: a Frequency: 1.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x6030000006d0
+[src/tokenizer.c:691] Token freed: 0x6030000006d0 
+[src/tokenizer.c:541] Adding token  to vocabulary.[src/tokenizer.c:677] Token created: 0x603000000b80, text: 
+[src/tokenizer.c:140] New Token created Text:  Frequency: 1.
+[src/tokenizer.c:545] Token  added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000700
+[src/tokenizer.c:691] Token freed: 0x603000000700 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 1.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000760
+[src/tokenizer.c:691] Token freed: 0x603000000760 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 2.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000790
+[src/tokenizer.c:691] Token freed: 0x603000000790 
+[src/tokenizer.c:541] Adding token  to vocabulary.[src/tokenizer.c:125] Token  already in the vocabulary. Frequency: 1.
+[src/tokenizer.c:545] Token  added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x6030000007c0
+[src/tokenizer.c:691] Token freed: 0x6030000007c0 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 3.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000820
+[src/tokenizer.c:691] Token freed: 0x603000000820 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 4.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000850
+[src/tokenizer.c:691] Token freed: 0x603000000850 
+[src/tokenizer.c:541] Adding token  to vocabulary.[src/tokenizer.c:125] Token  already in the vocabulary. Frequency: 2.
+[src/tokenizer.c:545] Token  added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000880
+[src/tokenizer.c:691] Token freed: 0x603000000880 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 5.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x6030000008e0
+[src/tokenizer.c:691] Token freed: 0x6030000008e0 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 6.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000910
+[src/tokenizer.c:691] Token freed: 0x603000000910 
+[src/tokenizer.c:541] Adding token  to vocabulary.[src/tokenizer.c:125] Token  already in the vocabulary. Frequency: 3.
+[src/tokenizer.c:545] Token  added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000940
+[src/tokenizer.c:691] Token freed: 0x603000000940 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 7.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x6030000009a0
+[src/tokenizer.c:691] Token freed: 0x6030000009a0 
+[src/tokenizer.c:541] Adding token a to vocabulary.[src/tokenizer.c:125] Token a already in the vocabulary. Frequency: 8.
+[src/tokenizer.c:545] Token a added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x6030000009d0
+[src/tokenizer.c:691] Token freed: 0x6030000009d0 
+[src/tokenizer.c:541] Adding token  to vocabulary.[src/tokenizer.c:125] Token  already in the vocabulary. Frequency: 4.
+[src/tokenizer.c:545] Token  added to vocabulary.
+[src/tokenizer.c:687] Token text freed: 0x603000000a00
+[src/tokenizer.c:691] Token freed: 0x603000000a00 
+[src/tokenizer.c:847] Vocabulary initialized.[src/tokenizer.c:850] Counting pairs...
+[src/tokenizer.c:577] Processing tokens: 0 and 1
+[src/tokenizer.c:579] Current token: a
+[src/tokenizer.c:582] Next token: a
+[src/tokenizer.c:599] Inserting freq pair a a into the hash table if you see this multiple time for the same token then get_value did not work as expected.
+[src/hash_table.c:274] Insert attempt - Key: a a
+[src/hash_table.c:276] Current state - Size: 0, Capacity: 300
+[src/hash_table.c:278] Load factor: 0.000000
+[src/tokenizer.c:577] Processing tokens: 3 and 4
+[src/tokenizer.c:579] Current token: a
+[src/tokenizer.c:582] Next token: a
+[src/tokenizer.c:594] Incrementing frequency of freq pair a a.
+[src/tokenizer.c:577] Processing tokens: 6 and 7
+[src/tokenizer.c:579] Current token: a
+[src/tokenizer.c:582] Next token: a
+[src/tokenizer.c:594] Incrementing frequency of freq pair a a.
+[src/tokenizer.c:577] Processing tokens: 9 and 10
+[src/tokenizer.c:579] Current token: a
+[src/tokenizer.c:582] Next token: a
+[src/tokenizer.c:594] Incrementing frequency of freq pair a a.
+[src/tokenizer.c:577] Processing tokens: 12 and 13
+[src/tokenizer.c:579] Current token: a
+[src/tokenizer.c:582] Next token: a
+[src/tokenizer.c:594] Incrementing frequency of freq pair a a.
+[src/tokenizer.c:856] Most frequent pair: a a freq: 5
+[src/tokenizer.c:677] Token created: 0x603000000e50, text: a
+[src/tokenizer.c:677] Token created: 0x603000000e80, text: a
+[src/tokenizer.c:677] Token created: 0x603000000eb0, text: aa
+[src/tokenizer.c:687] Token text freed: 0x6030000002e0
+[src/tokenizer.c:691] Token freed: 0x6030000002e0 
+[src/tokenizer.c:677] Token created: 0x603000000ee0, text: aa
+[src/tokenizer.c:687] Token text freed: 0x603000000310
+[src/tokenizer.c:691] Token freed: 0x603000000310 
+[src/tokenizer.c:687] Token text freed: 0x6030000003a0
+[src/tokenizer.c:691] Token freed: 0x6030000003a0 
+[src/tokenizer.c:677] Token created: 0x603000000f10, text: aa
+[src/tokenizer.c:687] Token text freed: 0x6030000003d0
+[src/tokenizer.c:691] Token freed: 0x6030000003d0 
+[src/tokenizer.c:687] Token text freed: 0x603000000460
+[src/tokenizer.c:691] Token freed: 0x603000000460 
+[src/tokenizer.c:677] Token created: 0x603000000f40, text: aa
+[src/tokenizer.c:687] Token text freed: 0x603000000490
+[src/tokenizer.c:691] Token freed: 0x603000000490 
+[src/tokenizer.c:687] Token text freed: 0x603000000520
+[src/tokenizer.c:691] Token freed: 0x603000000520 
+[src/tokenizer.c:677] Token created: 0x603000000f70, text: aa
+[src/tokenizer.c:687] Token text freed: 0x603000000550
+[src/tokenizer.c:691] Token freed: 0x603000000550 
+[src/tokenizer.c:687] Token text freed: 0x6030000005e0
+[src/tokenizer.c:691] Token freed: 0x6030000005e0 
+[src/tokenizer.c:677] Token created: 0x603000000fa0, text: aa
+[src/tokenizer.c:687] Token text freed: 0x603000000610
+[src/tokenizer.c:691] Token freed: 0x603000000610 
+[src/tokenizer.c:687] Token text freed: 0x603000000e50
+[src/tokenizer.c:691] Token freed: 0x603000000e50 
+[src/tokenizer.c:687] Token text freed: 0x603000000e80
+[src/tokenizer.c:691] Token freed: 0x603000000e80 
+[src/tokenizer.c:687] Token text freed: 0x603000000eb0
+[src/tokenizer.c:691] Token freed: 0x603000000eb0 
+[src/tokenizer.c:864] Vocabulary size before add_merged_token: 3
+[src/tokenizer.c:677] Token created: 0x603000000fd0, text: aa
+[src/tokenizer.c:866] VOcabulary size after add_merged_token: 4 and num_tokens is 10 
+[src/tokenizer.c:874] Iteration 0: vocab_size=4, MAX_VOCAB_SIZE=10000
+[src/tokenizer.c:850] Counting pairs...
+No entry in hash table.
+[src/tokenizer.c:687] Token text freed: 0x603000000ee0
+[src/tokenizer.c:691] Token freed: 0x603000000ee0 
+[src/tokenizer.c:687] Token text freed: 0x603000000340
+[src/tokenizer.c:691] Token freed: 0x603000000340 
+[src/tokenizer.c:687] Token text freed: 0x603000000f10
+[src/tokenizer.c:691] Token freed: 0x603000000f10 
+[src/tokenizer.c:687] Token text freed: 0x603000000400
+[src/tokenizer.c:691] Token freed: 0x603000000400 
+[src/tokenizer.c:687] Token text freed: 0x603000000f40
+[src/tokenizer.c:691] Token freed: 0x603000000f40 
+[src/tokenizer.c:687] Token text freed: 0x6030000004c0
+[src/tokenizer.c:691] Token freed: 0x6030000004c0 
+[src/tokenizer.c:687] Token text freed: 0x603000000f70
+[src/tokenizer.c:691] Token freed: 0x603000000f70 
+[src/tokenizer.c:687] Token text freed: 0x603000000580
+[src/tokenizer.c:691] Token freed: 0x603000000580 
+[src/tokenizer.c:687] Token text freed: 0x603000000fa0
+[src/tokenizer.c:691] Token freed: 0x603000000fa0 
+[src/tokenizer.c:687] Token text freed: 0x603000000640
+[src/tokenizer.c:691] Token freed: 0x603000000640 
+[src/tokenizer.c:506] Freeing the vocabulary at 18 
+[src/tokenizer.c:687] Token text freed: 0x603000000fd0
+[src/tokenizer.c:691] Token freed: 0x603000000fd0 
+[src/tokenizer.c:506] Freeing the vocabulary at 30 
+[src/tokenizer.c:687] Token text freed: 0x603000000b80
+[src/tokenizer.c:691] Token freed: 0x603000000b80 
+[src/tokenizer.c:506] Freeing the vocabulary at 75 
+[src/tokenizer.c:687] Token text freed: 0x603000000a60
+[src/tokenizer.c:691] Token freed: 0x603000000a60 
+[src/tokenizer.c:506] Freeing the vocabulary at 76 
+[src/tokenizer.c:687] Token text freed: 0x603000000af0
+[src/tokenizer.c:691] Token freed: 0x603000000af0 
+[src/tokenizer.c:515] Freeing the Vocabulary itself 0x618000000c80
+Running Dataset Tests...
+Running Hash Table Tests...
+Running Free Tokenizer Memory Tests....
+Starting BPE and Tokenizer tests...
+Testing BPE with empty input...
+Empty input test passed
+Testing BPE with single character...
+BPE complete. Final vocabulary size: 2
+Single character test passed
+Testing BPE with repeated sequence...
+Completed 0 merges, vocabulary size: 4
+BPE complete. Final vocabulary size: 4
+Repeated sequence test passed
+All tests completed successfully!
+All tests completed.

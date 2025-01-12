@@ -5,7 +5,7 @@
 // Declare the functions to run dataset and hash table tests
 void run_dataset_tests();
 void run_hash_table_tests();
-void test_BPE();
+
 void test_add_to_vocabulary();
 void test_free_tokenizer();
 void test_memory_leak();

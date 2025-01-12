@@ -2,12 +2,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "tokenizer.h"
-#include "utils.h"
-#include "hash_table.h"
-#include "../include/config.h"
-#include "../include/debug.h"
-#include "dataset.h"
+#include <tokenizer.h>
+#include <utils.h>
+#include <hash_table.h>
+#include <config.h>
+#include <debug.h>
+#include <dataset.h>
 
 /*
  * tokenizer.c
@@ -597,7 +597,7 @@ void count_pairs(Tokenizer* tokenizer, Token** tokens, size_t num_tokens){
         	}else{
 			size_t freq = 1;
 			DEBUG_TOK("Inserting freq pair %s into the hash table if you see this multiple time for the same token then get_value did not work as expected.\n",pair_key);
-            		insert_into_hash_table(tokenizer->pair_freqs, (const void*)pair_key, (const void*)&freq,strlen(pair_key),sizeof(size_t));
+            		insert_into_hash_table(tokenizer->pair_freqs, (const void*)pair_key, (const void*)&freq,strlen(pair_key) + 1,sizeof(size_t));
         	}
 
         	free(pair_key);
@@ -846,7 +846,7 @@ void BPE(Tokenizer* tokenizer, TextFile* dataset){
 	size_t merges = 0;
 	DEBUG_TOK("Vocabulary initialized.");
 	size_t counter = 0;
-	while(tokenizer->vocab_size < MAX_VOCAB_SIZE || counter > 2*MAX_VOCAB_SIZE){
+	while(tokenizer->vocab_size < MAX_VOCAB_SIZE || counter < 2*MAX_VOCAB_SIZE){
 		DEBUG_TOK("Counting pairs...\n");
 		count_pairs(tokenizer,tokenized_data,num_tokens);
 		HashEntry* most_freq_pair = find_most_freq_pairs(tokenizer->pair_freqs);
@@ -860,13 +860,18 @@ void BPE(Tokenizer* tokenizer, TextFile* dataset){
 			free_tokens(tokenized_data,num_tokens);
 			return;
 		}
+
+		DEBUG_TOK("Vocabulary size before add_merged_token: %zu\n", tokenizer->vocab_size);
 		add_merged_token(tokenizer,(const char*) res, *(size_t*)most_freq_pair->value);
+		DEBUG_TOK("VOcabulary size after add_merged_token: %zu and num_tokens is %zu \n",tokenizer->vocab_size,num_tokens);
 		free(res);
 
 		if(merges % 1000 == 0) {  // Print every 1000 merges
             		printf("Completed %zu merges, vocabulary size: %zu\n",
                 	   merges, tokenizer->vocab_size);
         	}
+
+		DEBUG_TOK("Iteration %zu: vocab_size=%zu, MAX_VOCAB_SIZE=%i\n",counter, tokenizer->vocab_size, MAX_VOCAB_SIZE);
         	merges++;
 		counter++;
 	}

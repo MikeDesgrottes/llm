@@ -1,6 +1,6 @@
 CC = gcc
-CFLAGS = -Wall -Werror -g -DDEBUG_LEVEL=0 -pg 
-
+CFLAGS = -Wall -Werror -g -DDEBUG_LEVEL=31 -pg -fsanitize=address  -O1 -I./include 
+LDFLAGS = -fsanitize=address
 SRC = src/main.c src/tokenizer.c src/utils.c
 OBJ = $(SRC:.c=.o)
 
@@ -18,7 +18,7 @@ $(TARGET): $(OBJ)
 	$(CC) $(OBJ) -o $@
 
 $(TEST_TARGET): $(TEST_OBJ)
-	$(CC) $(TEST_OBJ) -o $@
+	$(CC) $(TEST_OBJ) $(LDFLAGS) -o $@
 
 
 %.o: %.c
